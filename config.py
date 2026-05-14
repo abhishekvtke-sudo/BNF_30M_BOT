@@ -1,4 +1,4 @@
 import os
 
-CLIENT_CODE = os.environ.get("CLIENT_CODE")
-ACCESS_TOKEN = os.environ.get("ACCESS_TOKEN")
+CLIENT_CODE = os.environ.get("DHAN_CLIENT_ID")
+ACCESS_TOKEN = os.environ.get("DHAN_ACCESS_TOKEN")
