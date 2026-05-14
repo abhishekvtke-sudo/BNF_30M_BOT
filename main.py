@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from dhanhq import DhanContext
 from dhanhq import dhanhq
 
 # =========================================
@@ -19,7 +20,12 @@ print("TOKEN LOADED")
 # LOGIN
 # =========================================
 
-dhan = dhanhq(client_id, access_token)
+dhan_context = DhanContext(
+    client_id,
+    access_token
+)
+
+dhan = dhanhq(dhan_context)
 
 print("CONNECTED TO DHAN")
 
