@@ -1,29 +1,16 @@
-from dhanhq import DhanContext, dhanhq
-from datetime import datetime
+from dhanhq import dhanhq
 import os
 import time
+from datetime import datetime
 
-# ==============================
-# DHAN CONFIG
-# ==============================
+client_id = os.getenv("DHAN_CLIENT_ID")
+access_token = os.getenv("DHAN_ACCESS_TOKEN")
 
-CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
-ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
+dhan = dhanhq(client_id, access_token)
 
-# ==============================
-# CONNECT DHAN
-# ==============================
-
-dhan_context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
-dhan = dhanhq(dhan_context)
-
-print("================================", flush=True)
-print("🟢 DHAN CONNECTED SUCCESSFULLY", flush=True)
-print("================================", flush=True)
-
-# ==============================
-# LIVE LOOP
-# ==============================
+print("================================")
+print("✅ CONNECTED TO DHAN")
+print("================================")
 
 while True:
 
@@ -35,14 +22,13 @@ while True:
             }
         )
 
-        print("================================", flush=True)
-        print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"), flush=True)
-        print("📈 BANKNIFTY DATA :", flush=True)
-        print(data, flush=True)
-        print("================================", flush=True)
+        print("================================")
+        print("TIME :", datetime.now().strftime("%H:%M:%S"))
+        print("BANKNIFTY DATA :")
+        print(data)
+        print("================================")
 
     except Exception as e:
-
-        print("❌ ERROR :", e, flush=True)
+        print("❌ ERROR :", e)
 
     time.sleep(5)
