@@ -1,8 +1,7 @@
 from dhanhq import DhanContext, MarketFeed
 from datetime import datetime
-import threading
+import asyncio
 import os
-import time
 
 # ====================================
 # DHAN CREDENTIALS
@@ -23,12 +22,15 @@ print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
 # ====================================
-# BANKNIFTY FEED
+# BANKNIFTY INSTRUMENT
 # ====================================
 instruments = [
     ("IDX_I", "25", MarketFeed.Ticker)
 ]
 
+# ====================================
+# MARKET FEED
+# ====================================
 feed = MarketFeed(
     dhan_context,
     instruments,
@@ -36,36 +38,29 @@ feed = MarketFeed(
 )
 
 # ====================================
-# RUN WEBSOCKET IN BACKGROUND
+# LIVE FEED LOOP
 # ====================================
-def start_feed():
-    try:
-        print("📡 CONNECTING TO MARKET FEED...")
-        feed.run_forever()
-    except Exception as e:
-        print("❌ FEED ERROR:", e)
+async def start_feed():
 
-threading.Thread(target=start_feed, daemon=True).start()
+    print("📡 CONNECTING TO MARKET FEED...")
 
-# Give websocket time to connect
-time.sleep(5)
+    await feed.connect()
+
+    print("✅ MARKET FEED CONNECTED")
+
+    while True:
+
+        response = await feed.get_instrument_data()
+
+        print("================================")
+        print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
+        print("📈 LIVE BANKNIFTY DATA :")
+        print(response)
+        print("================================")
+
+        await asyncio.sleep(1)
 
 # ====================================
-# LIVE DATA LOOP
+# START PROGRAM
 # ====================================
-while True:
-
-    try:
-
-        print("🟢 BOT RUNNING :", datetime.now().strftime("%H:%M:%S"))
-
-        data = feed.get_data()
-
-        if data:
-            print("📈 BANKNIFTY DATA :", data)
-
-    except Exception as e:
-
-        print("❌ ERROR :", e)
-
-    time.sleep(1)
+asyncio.run(start_feed())
