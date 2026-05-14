@@ -1,4 +1,5 @@
 from dhanhq import DhanContext, MarketFeed
+from datetime import datetime
 import os
 import time
 
@@ -11,46 +12,52 @@ ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 # =========================
 # DHAN CONTEXT
 # =========================
-dhan_context = DhanContext(
-    CLIENT_ID,
-    ACCESS_TOKEN
-)
+dhan_context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
 
 print("================================")
 print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
 # =========================
-# BANKNIFTY FEED
+# BANKNIFTY LIVE FEED
 # =========================
 instruments = [
-    (MarketFeed.IDX, "25", MarketFeed.Ticker)
+    (MarketFeed.NSE_IDX, "25", MarketFeed.Ticker)
 ]
 
 # =========================
-# CONTINUOUS LOOP
+# MARKET FEED
+# =========================
+feed = MarketFeed(
+    dhan_context,
+    instruments,
+    version="v2"
+)
+
+# =========================
+# LIVE LOOP
 # =========================
 while True:
 
     try:
 
-        print("================================")
         print("📡 CONNECTING TO MARKET FEED...")
-        print("================================")
 
-        market_feed = MarketFeed(
-            dhan_context,
-            instruments,
-            "v2"
-        )
+        feed.run_forever()
 
-        market_feed.run_forever()
+        while True:
+
+            data = feed.get_data()
+
+            print("================================")
+            print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
+            print("📈 LIVE DATA :", data)
+            print("================================")
+
+            time.sleep(1)
 
     except Exception as e:
 
-        print("================================")
         print("❌ ERROR :", e)
         print("🔄 RECONNECTING IN 5 SECONDS...")
-        print("================================")
-
         time.sleep(5)
