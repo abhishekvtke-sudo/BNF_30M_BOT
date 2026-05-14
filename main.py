@@ -1,69 +1,48 @@
+from dhanhq import dhanhq
+from zoneinfo import ZoneInfo
+from datetime import datetime
 import os
 import time
-
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-from dhanhq import DhanContext, dhanhq
-
-# =========================================
-# LOAD ENV VARIABLES
-# =========================================
 
 client_id = os.environ["DHAN_CLIENT_ID"]
 access_token = os.environ["DHAN_ACCESS_TOKEN"]
 
-print("CLIENT ID LOADED", flush=True)
-print("TOKEN LOADED", flush=True)
+print("CLIENT ID LOADED")
+print("TOKEN LOADED")
 
-# =========================================
-# CONNECT TO DHAN
-# =========================================
+dhan = dhanhq(client_id, access_token)
 
-dhan_context = DhanContext(
-    client_id,
-    access_token
-)
-
-dhan = dhanhq(dhan_context)
-
-print("CONNECTED TO DHAN", flush=True)
-
-# =========================================
-# LIVE LOOP
-# =========================================
+print("CONNECTED TO DHAN")
 
 while True:
 
     try:
 
-        print("\n==============================", flush=True)
+        print("\n==============================")
+
+        india_time = datetime.now(
+            ZoneInfo("Asia/Kolkata")
+        )
 
         print(
             f"TIME : "
-            f"{datetime.now(ZoneInfo('Asia/Kolkata')).strftime('%H:%M:%S')}",
-            flush=True
+            f"{india_time.strftime('%H:%M:%S')}"
         )
-
-        # =====================================
-        # BANKNIFTY QUOTE
-        # SECURITY ID = 23
-        # =====================================
 
         data = dhan.quote_data(
             securities={
-                "IDX_I": ["23"]
+                "IDX_I": ["13"]
             }
         )
 
-        print("BANKNIFTY DATA :", flush=True)
+        print("BANKNIFTY DATA :")
 
-        print(data, flush=True)
+        print(data)
 
-        print("==============================", flush=True)
+        print("==============================")
 
     except Exception as e:
 
-        print(f"ERROR : {e}", flush=True)
+        print(f"ERROR : {e}")
 
     time.sleep(5)
