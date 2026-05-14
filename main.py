@@ -1,10 +1,17 @@
 from dhanhq import DhanContext, MarketFeed
 from datetime import datetime
 import os
-import time
+
+# ==================================
+# DHAN CREDENTIALS
+# ==================================
 
 CLIENT_CODE = os.getenv("DHAN_CLIENT_CODE")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
+
+# ==================================
+# DHAN CONNECTION
+# ==================================
 
 dhan_context = DhanContext(
     CLIENT_CODE,
@@ -15,7 +22,10 @@ print("================================")
 print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
-# BANKNIFTY INDEX
+# ==================================
+# BANKNIFTY LIVE FEED
+# ==================================
+
 instruments = [
     (MarketFeed.IDX, "25", MarketFeed.Ticker)
 ]
@@ -28,14 +38,16 @@ feed = MarketFeed(
     version
 )
 
+# ==================================
+# LIVE DATA LOOP
+# ==================================
+
 while True:
-    feed.run_forever()
 
     response = feed.get_data()
 
     print("================================")
-    print("⏰", datetime.now().strftime("%H:%M:%S"))
+    print("⏰ TIME :", datetime.now().strftime("%H:%M:%S"))
+    print("📈 BANKNIFTY LIVE DATA")
     print(response)
     print("================================")
-
-    time.sleep(1)
