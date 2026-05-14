@@ -3,25 +3,28 @@ from datetime import datetime
 import os
 import time
 
-# =========================
-# DHAN CREDENTIALS
-# =========================
-CLIENT_ID = os.getenv("DHAN_CLIENT_CODE")
+# ==============================
+# DHAN CONFIG
+# ==============================
+
+CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
-# =========================
-# DHAN LOGIN
-# =========================
+# ==============================
+# CONNECT DHAN
+# ==============================
+
 dhan_context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
 dhan = dhanhq(dhan_context)
 
-print("================================")
-print("🟢 DHAN CONNECTED SUCCESSFULLY")
-print("================================")
+print("================================", flush=True)
+print("🟢 DHAN CONNECTED SUCCESSFULLY", flush=True)
+print("================================", flush=True)
 
-# =========================
+# ==============================
 # LIVE LOOP
-# =========================
+# ==============================
+
 while True:
 
     try:
@@ -32,14 +35,14 @@ while True:
             }
         )
 
-        print("================================")
-        print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
-        print("📈 BANKNIFTY DATA :")
-        print(data)
-        print("================================")
+        print("================================", flush=True)
+        print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"), flush=True)
+        print("📈 BANKNIFTY DATA :", flush=True)
+        print(data, flush=True)
+        print("================================", flush=True)
 
     except Exception as e:
 
-        print("❌ ERROR :", e)
+        print("❌ ERROR :", e, flush=True)
 
     time.sleep(5)

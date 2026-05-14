@@ -1,1 +1,6 @@
+scipy
+mibian
+numpy
+pandas
 dhanhq==2.2.0
+Dhan-Tradehull
