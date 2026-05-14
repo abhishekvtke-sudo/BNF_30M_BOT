@@ -1,5 +1,6 @@
 from dhanhq import DhanContext, MarketFeed
 import os
+import time
 
 # =========================
 # DHAN CREDENTIALS
@@ -17,31 +18,37 @@ print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
 # =========================
-# BANKNIFTY INSTRUMENT
+# BANKNIFTY LIVE FEED
 # =========================
 instruments = [
-    (MarketFeed.IDX_I, "25", MarketFeed.Ticker)
+    ("IDX_I", "25", MarketFeed.Ticker)
 ]
 
-# =========================
-# CREATE FEED
-# =========================
 feed = MarketFeed(
     dhan_context,
     instruments,
     version="v2"
 )
 
-# IMPORTANT
+# =========================
+# CONNECT WEBSOCKET
+# =========================
 feed.run_forever()
 
 # =========================
-# LIVE DATA LOOP
+# LIVE LOOP
 # =========================
 while True:
-    response = feed.get_data()
+    try:
+        data = feed.get_data()
 
-    print("================================")
-    print("📈 LIVE BANKNIFTY DATA")
-    print(response)
-    print("================================")
+        print("================================")
+        print("📈 LIVE BANKNIFTY DATA")
+        print(data)
+        print("================================")
+
+        time.sleep(1)
+
+    except Exception as e:
+        print("ERROR :", e)
+        time.sleep(5)
