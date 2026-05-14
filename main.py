@@ -1,66 +1,45 @@
-from dhanhq import DhanContext, MarketFeed
+from dhanhq import DhanContext, dhanhq
 from datetime import datetime
-import asyncio
 import os
+import time
 
-# ====================================
+# =========================
 # DHAN CREDENTIALS
-# ====================================
+# =========================
 CLIENT_ID = os.getenv("DHAN_CLIENT_CODE")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
-# ====================================
-# DHAN CONTEXT
-# ====================================
-dhan_context = DhanContext(
-    CLIENT_ID,
-    ACCESS_TOKEN
-)
+# =========================
+# DHAN LOGIN
+# =========================
+dhan_context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
+dhan = dhanhq(dhan_context)
 
 print("================================")
 print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
-# ====================================
-# BANKNIFTY INSTRUMENT
-# ====================================
-instruments = [
-    ("IDX_I", "25", MarketFeed.Ticker)
-]
+# =========================
+# LIVE LOOP
+# =========================
+while True:
 
-# ====================================
-# MARKET FEED
-# ====================================
-feed = MarketFeed(
-    dhan_context,
-    instruments,
-    "v2"
-)
+    try:
 
-# ====================================
-# LIVE FEED LOOP
-# ====================================
-async def start_feed():
-
-    print("📡 CONNECTING TO MARKET FEED...")
-
-    await feed.connect()
-
-    print("✅ MARKET FEED CONNECTED")
-
-    while True:
-
-        response = await feed.get_instrument_data()
+        data = dhan.ohlc_data(
+            securities={
+                "IDX_I": [25]
+            }
+        )
 
         print("================================")
         print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
-        print("📈 LIVE BANKNIFTY DATA :")
-        print(response)
+        print("📈 BANKNIFTY DATA :")
+        print(data)
         print("================================")
 
-        await asyncio.sleep(1)
+    except Exception as e:
 
-# ====================================
-# START PROGRAM
-# ====================================
-asyncio.run(start_feed())
+        print("❌ ERROR :", e)
+
+    time.sleep(5)
