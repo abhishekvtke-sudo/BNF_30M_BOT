@@ -57,15 +57,15 @@ while True:
 
     try:
 
+        print("🟢 BOT RUNNING :", datetime.now().strftime("%H:%M:%S"))
+
         data = feed.get_data()
 
-        print("================================")
-        print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
-        print("📈 BANKNIFTY DATA :", data)
-        print("================================")
+        if data:
+            print("📈 BANKNIFTY DATA :", data)
 
     except Exception as e:
 
-        print("❌ DATA ERROR :", e)
+        print("❌ ERROR :", e)
 
     time.sleep(1)
