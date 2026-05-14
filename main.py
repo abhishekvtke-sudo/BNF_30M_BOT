@@ -13,8 +13,8 @@ ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 # DHAN LOGIN
 # ==============================
 dhan = dhanhq(
-    client_id=CLIENT_CODE,
-    access_token=ACCESS_TOKEN
+    CLIENT_CODE,
+    ACCESS_TOKEN
 )
 
 print("======================================")
