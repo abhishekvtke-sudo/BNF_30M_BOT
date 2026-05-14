@@ -1,88 +1,59 @@
-from dhanhq import dhanhq
-from datetime import datetime, time as dtime
+from dhanhq import DhanContext, MarketFeed
+from datetime import datetime
 import os
 import time
 
-# ==============================
-# DHAN CREDENTIALS (FROM RENDER ENV)
-# ==============================
+# =========================
+# DHAN CREDENTIALS
+# =========================
 CLIENT_CODE = os.getenv("DHAN_CLIENT_CODE")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
-# ==============================
-# DHAN LOGIN
-# ==============================
-dhan = dhanhq(ACCESS_TOKEN)
+# =========================
+# DHAN CONTEXT
+# =========================
+dhan_context = DhanContext(
+    CLIENT_CODE,
+    ACCESS_TOKEN
+)
 
-print("======================================")
+print("===================================")
 print("🟢 DHAN CONNECTED SUCCESSFULLY")
-print("======================================")
+print("===================================")
 
-# ==============================
-# BANKNIFTY DETAILS
-# ==============================
-BANKNIFTY_SECURITY_ID = "25"   # BankNifty Index ID
-EXCHANGE_SEGMENT = "IDX_I"
+# =========================
+# BANKNIFTY LIVE DATA
+# =========================
 
-# ==============================
-# MARKET TIMINGS
-# ==============================
-MARKET_START = dtime(9, 15)
-MARKET_END   = dtime(15, 30)
+# BankNifty Index
+instruments = [
+    (MarketFeed.NSE_FNO, "25", MarketFeed.Ticker)
+]
 
-# ==============================
-# LIVE LOOP
-# ==============================
-while True:
+version = "v2"
 
-    try:
-        # Current Time
-        now = datetime.now()
-        current_time = now.time()
+try:
 
-        # Fetch Live BankNifty Price
-        data = dhan.quote_data(
-            security_id=BANKNIFTY_SECURITY_ID,
-            exchange_segment=EXCHANGE_SEGMENT
-        )
+    data = MarketFeed(
+        dhan_context,
+        instruments,
+        version
+    )
 
-        # Extract LTP
-        ltp = data['data']['last_price']
+    while True:
 
-        # Time Left for Market Open
-        if current_time < MARKET_START:
-            seconds_left = (
-                datetime.combine(now.date(), MARKET_START)
-                - now
-            ).seconds
+        data.run_forever()
 
-            mins = seconds_left // 60
-            secs = seconds_left % 60
+        response = data.get_data()
 
-            market_status = f"⏳ MARKET OPENS IN {mins}m {secs}s"
+        print("===================================")
+        print("⏰ TIME :", datetime.now().strftime("%H:%M:%S"))
+        print("📈 BANKNIFTY LIVE DATA")
+        print(response)
+        print("===================================")
 
-        elif MARKET_START <= current_time <= MARKET_END:
-            market_status = "🟢 MARKET IS LIVE"
+        time.sleep(1)
 
-        else:
-            market_status = "🔴 MARKET CLOSED"
+except Exception as e:
 
-        # Clear Display
-        print("\n" * 2)
-
-        print("======================================")
-        print("🟢 DHAN CONNECTED")
-        print("======================================")
-
-        print(f"📈 BANKNIFTY LIVE PRICE : {ltp}")
-        print(f"🕒 CURRENT TIME         : {now.strftime('%H:%M:%S')}")
-        print(f"{market_status}")
-
-        print("======================================")
-
-        # Refresh every 5 seconds
-        time.sleep(5)
-
-    except Exception as e:
-        print("❌ ERROR :", e)
-        time.sleep(5)
+    print("ERROR :", e)
