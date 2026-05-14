@@ -3,14 +3,27 @@ import os
 import time
 from datetime import datetime
 
-client_id = os.getenv("DHAN_CLIENT_ID")
-access_token = os.getenv("DHAN_ACCESS_TOKEN")
+# =========================
+# READ ENV VARIABLES
+# =========================
+
+client_id = os.environ["DHAN_CLIENT_ID"]
+access_token = os.environ["DHAN_ACCESS_TOKEN"]
+
+print("CLIENT ID LOADED")
+print("TOKEN LOADED")
+
+# =========================
+# CONNECT DHAN
+# =========================
 
 dhan = dhanhq(client_id, access_token)
 
-print("================================")
 print("✅ CONNECTED TO DHAN")
-print("================================")
+
+# =========================
+# LIVE LOOP
+# =========================
 
 while True:
 
@@ -24,7 +37,6 @@ while True:
 
         print("================================")
         print("TIME :", datetime.now().strftime("%H:%M:%S"))
-        print("BANKNIFTY DATA :")
         print(data)
         print("================================")
 
