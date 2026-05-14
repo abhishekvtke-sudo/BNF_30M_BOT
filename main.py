@@ -46,11 +46,11 @@ while True:
         )
 
         # =====================================
-        # BANKNIFTY INDEX DATA
-        # INDEX ID = 23
+        # BANKNIFTY QUOTE
+        # SECURITY ID = 23
         # =====================================
 
-        data = dhan.ohlc_data(
+        data = dhan.quote_data(
             securities={
                 "IDX_I": [23]
             }
