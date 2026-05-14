@@ -1,5 +1,6 @@
 from dhanhq import DhanContext, MarketFeed
 import os
+import time
 
 # =========================
 # DHAN CREDENTIALS
@@ -26,17 +27,30 @@ instruments = [
     (MarketFeed.IDX, "25", MarketFeed.Ticker)
 ]
 
-market_feed = MarketFeed(
-    dhan_context,
-    instruments,
-    "v2"
-)
-
 # =========================
-# START WEBSOCKET
+# CONTINUOUS LOOP
 # =========================
-print("================================")
-print("📡 CONNECTING TO MARKET FEED...")
-print("================================")
+while True:
 
-market_feed.run_forever()
+    try:
+
+        print("================================")
+        print("📡 CONNECTING TO MARKET FEED...")
+        print("================================")
+
+        market_feed = MarketFeed(
+            dhan_context,
+            instruments,
+            "v2"
+        )
+
+        market_feed.run_forever()
+
+    except Exception as e:
+
+        print("================================")
+        print("❌ ERROR :", e)
+        print("🔄 RECONNECTING IN 5 SECONDS...")
+        print("================================")
+
+        time.sleep(5)
