@@ -1,8 +1,13 @@
-from dhanhq import dhanhq
-from zoneinfo import ZoneInfo
-from datetime import datetime
 import os
 import time
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from dhanhq import dhanhq
+
+# =========================================
+# ENV VARIABLES
+# =========================================
 
 client_id = os.environ["DHAN_CLIENT_ID"]
 access_token = os.environ["DHAN_ACCESS_TOKEN"]
@@ -10,19 +15,30 @@ access_token = os.environ["DHAN_ACCESS_TOKEN"]
 print("CLIENT ID LOADED")
 print("TOKEN LOADED")
 
-dhan = dhanhq(client_id, access_token)
+# =========================================
+# LOGIN
+# =========================================
+
+dhan = dhanhq(
+    client_id=client_id,
+    access_token=access_token
+)
 
 print("CONNECTED TO DHAN")
+
+# =========================================
+# LOOP
+# =========================================
 
 while True:
 
     try:
 
-        print("\n==============================")
-
         india_time = datetime.now(
             ZoneInfo("Asia/Kolkata")
         )
+
+        print("\n==============================")
 
         print(
             f"TIME : "
