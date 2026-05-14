@@ -1,6 +1,5 @@
 from dhanhq import DhanContext, MarketFeed
 import os
-import time
 
 # =========================
 # DHAN CREDENTIALS
@@ -21,32 +20,23 @@ print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
 # =========================
-# BANKNIFTY LIVE FEED
+# BANKNIFTY FEED
 # =========================
 instruments = [
     (MarketFeed.IDX, "25", MarketFeed.Ticker)
 ]
 
-version = "v2"
-
 market_feed = MarketFeed(
     dhan_context,
     instruments,
-    version
+    "v2"
 )
 
 # =========================
-# START FEED
+# START WEBSOCKET
 # =========================
-try:
-    print("================================")
-    print("📡 CONNECTING TO MARKET FEED...")
-    print("================================")
+print("================================")
+print("📡 CONNECTING TO MARKET FEED...")
+print("================================")
 
-    market_feed.run_forever()
-
-except Exception as e:
-    print("ERROR :", e)
-
-finally:
-    market_feed.disconnect()
+market_feed.run_forever()
