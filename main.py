@@ -11,11 +11,11 @@ from dhanhq import DhanContext, dhanhq
 client_id = os.environ["DHAN_CLIENT_ID"]
 access_token = os.environ["DHAN_ACCESS_TOKEN"]
 
-print("CLIENT ID LOADED")
-print("TOKEN LOADED")
+print("CLIENT ID LOADED", flush=True)
+print("TOKEN LOADED", flush=True)
 
 # =========================================
-# DHAN LOGIN
+# CONNECT TO DHAN
 # =========================================
 
 dhan_context = DhanContext(
@@ -25,7 +25,7 @@ dhan_context = DhanContext(
 
 dhan = dhanhq(dhan_context)
 
-print("CONNECTED TO DHAN")
+print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
 # LIVE LOOP
@@ -35,21 +35,29 @@ while True:
 
     try:
 
-        # BANKNIFTY OHLC
+        print("\n==============================", flush=True)
+        print(
+            f"TIME : {datetime.now().strftime('%H:%M:%S')}",
+            flush=True
+        )
+
+        # =====================================
+        # FETCH BANKNIFTY DATA
+        # =====================================
+
         data = dhan.ohlc_data(
             securities={
                 "IDX_I": [25]
             }
         )
 
-        print("\n==============================")
-        print("TIME :", datetime.now().strftime("%H:%M:%S"))
-        print("==============================")
-        print(data)
-        print("==============================")
+        print("BANKNIFTY DATA :", flush=True)
+        print(data, flush=True)
+
+        print("==============================", flush=True)
 
     except Exception as e:
 
-        print("\nERROR :", e)
+        print(f"ERROR : {e}", flush=True)
 
     time.sleep(5)
