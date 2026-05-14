@@ -1,6 +1,8 @@
 import os
 import time
+
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from dhanhq import DhanContext, dhanhq
 
@@ -36,22 +38,26 @@ while True:
     try:
 
         print("\n==============================", flush=True)
+
         print(
-            f"TIME : {datetime.now().strftime('%H:%M:%S')}",
+            f"TIME : "
+            f"{datetime.now(ZoneInfo('Asia/Kolkata')).strftime('%H:%M:%S')}",
             flush=True
         )
 
         # =====================================
-        # FETCH BANKNIFTY DATA
+        # BANKNIFTY INDEX DATA
+        # INDEX ID = 23
         # =====================================
 
         data = dhan.ohlc_data(
             securities={
-                "IDX_I": [25]
+                "IDX_I": [23]
             }
         )
 
         print("BANKNIFTY DATA :", flush=True)
+
         print(data, flush=True)
 
         print("==============================", flush=True)
