@@ -19,10 +19,7 @@ print("TOKEN LOADED")
 # LOGIN
 # =========================================
 
-dhan = dhanhq(
-    client_id=client_id,
-    access_token=access_token
-)
+dhan = dhanhq(client_id, access_token)
 
 print("CONNECTED TO DHAN")
 
