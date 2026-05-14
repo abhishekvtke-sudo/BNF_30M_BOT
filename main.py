@@ -3,61 +3,73 @@ from datetime import datetime
 import os
 import time
 
-# =========================
-# DHAN CREDENTIALS
-# =========================
+# ==========================================
+# DHAN CREDENTIALS FROM RENDER ENV VARIABLES
+# ==========================================
 CLIENT_ID = os.getenv("DHAN_CLIENT_CODE")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
-# =========================
+# ==========================================
 # DHAN CONTEXT
-# =========================
-dhan_context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
+# ==========================================
+dhan_context = DhanContext(
+    CLIENT_ID,
+    ACCESS_TOKEN
+)
 
 print("================================")
 print("🟢 DHAN CONNECTED SUCCESSFULLY")
 print("================================")
 
-# =========================
-# BANKNIFTY LIVE FEED
-# =========================
+# ==========================================
+# BANKNIFTY LIVE MARKET FEED
+# ==========================================
+# Format:
+# (exchange_segment, security_id, subscription_type)
+
 instruments = [
-    (MarketFeed.NSE_IDX, "25", MarketFeed.Ticker)
+    ("IDX_I", "25", MarketFeed.Ticker)
 ]
 
-# =========================
-# MARKET FEED
-# =========================
+version = "v2"
+
+# ==========================================
+# CREATE MARKET FEED
+# ==========================================
 feed = MarketFeed(
     dhan_context,
     instruments,
-    version="v2"
+    version
 )
 
-# =========================
-# LIVE LOOP
-# =========================
+# ==========================================
+# CONNECT TO WEBSOCKET
+# ==========================================
+print("================================")
+print("📡 CONNECTING TO MARKET FEED...")
+print("================================")
+
+feed.run_forever()
+
+# ==========================================
+# LIVE DATA LOOP
+# ==========================================
 while True:
 
     try:
 
-        print("📡 CONNECTING TO MARKET FEED...")
+        response = feed.get_data()
 
-        feed.run_forever()
+        print("================================")
+        print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
+        print("📈 LIVE BANKNIFTY DATA :")
+        print(response)
+        print("================================")
 
-        while True:
-
-            data = feed.get_data()
-
-            print("================================")
-            print("🕒 TIME :", datetime.now().strftime("%H:%M:%S"))
-            print("📈 LIVE DATA :", data)
-            print("================================")
-
-            time.sleep(1)
+        time.sleep(1)
 
     except Exception as e:
 
         print("❌ ERROR :", e)
-        print("🔄 RECONNECTING IN 5 SECONDS...")
+        print("🔄 RETRYING IN 5 SECONDS...")
         time.sleep(5)
