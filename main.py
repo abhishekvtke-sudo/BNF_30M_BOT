@@ -17,7 +17,7 @@ headers = {
 url = "https://api.dhan.co/v2/marketfeed/ltp"
 
 payload = {
-    "MCX_COMM": [114]
+    "MCX_COMM": [491727]
 }
 
 while True:
