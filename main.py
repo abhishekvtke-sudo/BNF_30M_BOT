@@ -42,4 +42,4 @@ while True:
     except Exception as e:
         print("ERROR:", e, flush=True)
 
-    time.sleep(5)
+    time.sleep(60)
