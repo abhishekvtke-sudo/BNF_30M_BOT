@@ -66,12 +66,9 @@ while True:
 
         data = dhan.quote_data(
             {
-                "IDX_I": {
-                    "23": [
-                        "LTP"
-                    ]
+                "IDX_I":[23]
+                
                 }
-            }
         )
 
         print("BANKNIFTY DATA :", flush=True)
