@@ -64,7 +64,7 @@ while True:
         # BANKNIFTY INDEX DATA
         # =====================================
 
-        data = dhan.quote_data(
+        data = dhan.ticker_data(
             {
                 "IDX_I":[23]
                 
