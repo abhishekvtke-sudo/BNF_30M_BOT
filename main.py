@@ -67,7 +67,9 @@ while True:
         data = dhan.quote_data(
             {
                 "IDX_I": {
-                    "23": []
+                    "23": [
+                        "LTP"
+                    ]
                 }
             }
         )
