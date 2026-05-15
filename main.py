@@ -1,32 +1,42 @@
 import os
 import time
-
-from dhanhq import dhanhq, DhanContext
+import requests
 
 print("START", flush=True)
 
-client_id = os.environ["DHAN_CLIENT_ID"]
-access_token = os.environ["DHAN_ACCESS_TOKEN"]
+CLIENT_ID = os.environ["DHAN_CLIENT_ID"]
+ACCESS_TOKEN = os.environ["DHAN_ACCESS_TOKEN"]
 
 print("ENV LOADED", flush=True)
 
-context = DhanContext(
-    client_id,
-    access_token
-)
+headers = {
+    "access-token": ACCESS_TOKEN,
+    "client-id": CLIENT_ID,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+}
 
-print("CONTEXT CREATED", flush=True)
+print("HEADERS READY", flush=True)
 
-dhan = dhanhq(context)
-
-print("DHAN OBJECT CREATED", flush=True)
-
-response = dhan.ltp_data({
+payload = {
     "NSE_IDX": [25]
-})
-
-print(response, flush=True)
+}
 
 while True:
-    print("LOOP OK", flush=True)
-    time.sleep(1)
+
+    try:
+
+        response = requests.post(
+            "https://api.dhan.co/v2/marketfeed/ltp",
+            headers=headers,
+            json=payload
+        )
+
+        print("====================", flush=True)
+        print("STATUS:", response.status_code, flush=True)
+        print(response.text, flush=True)
+
+    except Exception as e:
+        print("ERROR:", e, flush=True)
+
+    time.sleep(5)
