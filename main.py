@@ -2,10 +2,14 @@ import requests
 import time
 import os
 
-print("SCRIPT STARTED")
+print("STEP 1")
 
 CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
+
+print("STEP 2")
+
+print("CLIENT =", CLIENT_ID)
 
 headers = {
     "access-token": ACCESS_TOKEN,
@@ -14,15 +18,19 @@ headers = {
     "Accept": "application/json"
 }
 
+print("STEP 3")
+
 url = "https://api.dhan.co/v2/marketfeed/ltp"
 
 payload = {
     "MCX_COMM": [491727]
 }
 
+print("STEP 4")
+
 while True:
 
-    print("REQUEST SENT")
+    print("LOOP START")
 
     try:
 
@@ -34,15 +42,7 @@ while True:
 
         print("STATUS =", response.status_code)
 
-        data = response.json()
-
-        print("FULL DATA =", data)
-
-        if response.status_code == 200:
-
-            price = data["data"]["MCX_COMM"]["491727"]["last_price"]
-
-            print("LIVE PRICE =", price)
+        print(response.text)
 
     except Exception as e:
 
