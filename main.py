@@ -19,7 +19,7 @@ print("TOKEN LOADED", flush=True)
 # DHAN CONNECTION
 # =====================================
 
-dhan = dhanhq(client_id, access_token)
+dhan = dhanhq(access_token)
 
 print("CONNECTED TO DHAN", flush=True)
 
