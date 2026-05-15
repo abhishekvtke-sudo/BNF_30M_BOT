@@ -1,7 +1,7 @@
 import time
 
-print("BOT STARTED")
+print("BOT STARTED", flush=True)
 
 while True:
-    print("WORKING")
-    time.sleep(15)
+    print("WORKING", flush=True)
+    time.sleep(5)
