@@ -11,6 +11,7 @@ print("STARTED", flush=True)
 # =========================================
 
 from dhanhq import dhanhq
+from dhanhq import DhanContext
 
 print("DHANHQ IMPORTED", flush=True)
 
@@ -25,28 +26,43 @@ print("CLIENT ID LOADED", flush=True)
 print("TOKEN LOADED", flush=True)
 
 # =========================================
+# CREATE DHAN CONTEXT
+# =========================================
+
+dhan_context = DhanContext(
+    client_id=client_id,
+    access_token=access_token
+)
+
+print("DHAN CONTEXT CREATED", flush=True)
+
+# =========================================
 # CONNECT TO DHAN
 # =========================================
 
-dhan = dhanhq(access_token)
+dhan = dhanhq(dhan_context)
 
 print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
-# LOOP
+# LIVE LOOP
 # =========================================
 
 while True:
 
     try:
 
-        print("\n======================", flush=True)
+        print("\n==========================", flush=True)
 
         current_time = datetime.now(
             ZoneInfo("Asia/Kolkata")
         ).strftime("%H:%M:%S")
 
         print(f"TIME : {current_time}", flush=True)
+
+        # =====================================
+        # BANKNIFTY INDEX DATA
+        # =====================================
 
         data = dhan.quote_data(
             securities={
@@ -58,7 +74,7 @@ while True:
 
         print(data, flush=True)
 
-        print("======================", flush=True)
+        print("==========================", flush=True)
 
     except Exception as e:
 
