@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 print("STARTED", flush=True)
 
 # =========================================
-# IMPORT AFTER START
+# IMPORT
 # =========================================
 
 from dhanhq import dhanhq
@@ -15,7 +15,7 @@ from dhanhq import dhanhq
 print("DHANHQ IMPORTED", flush=True)
 
 # =========================================
-# ENV
+# ENV VARIABLES
 # =========================================
 
 client_id = os.getenv("DHAN_CLIENT_ID")
@@ -25,25 +25,22 @@ print("CLIENT ID LOADED", flush=True)
 print("TOKEN LOADED", flush=True)
 
 # =========================================
-# LOGIN
+# CONNECT TO DHAN
 # =========================================
 
-dhan = dhanhq(
-    client_id,
-    access_token
-)
+dhan = dhanhq(access_token)
 
 print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
-# TEST LOOP
+# LOOP
 # =========================================
 
 while True:
 
     try:
 
-        print("\n====================", flush=True)
+        print("\n======================", flush=True)
 
         current_time = datetime.now(
             ZoneInfo("Asia/Kolkata")
@@ -57,9 +54,11 @@ while True:
             }
         )
 
+        print("BANKNIFTY DATA :", flush=True)
+
         print(data, flush=True)
 
-        print("====================", flush=True)
+        print("======================", flush=True)
 
     except Exception as e:
 
