@@ -57,10 +57,12 @@ trail_sl = None
 last_5m_bucket = None
 last_30m_bucket = None
 
+last_print_price = None
+
 print("30M BREAKOUT BOT STARTED", flush=True)
 
 # =====================================================
-# LOOP
+# MAIN LOOP
 # =====================================================
 
 while True:
@@ -69,21 +71,21 @@ while True:
 
         now = datetime.now()
 
-        # =============================================
+        # =================================================
         # MARKET TIME
-        # =============================================
+        # =================================================
 
-        if now.hour < 0 or (now.hour == 0 and now.minute < 0):
+        if now.hour < 0 or (now.hour == 0 and now.minute < 1):
             time.sleep(5)
             continue
 
-        if now.hour > 23 or (now.hour == 23 and now.minute > 59):
-            print("MARKET CLOSED", flush=True)
+        if now.hour > 15 or (now.hour == 15 and now.minute > 15):
+            print("\nMARKET CLOSED", flush=True)
             break
 
-        # =============================================
+        # =================================================
         # FETCH LIVE PRICE
-        # =============================================
+        # =================================================
 
         response = requests.post(url, json=payload, headers=headers)
 
@@ -95,24 +97,40 @@ while True:
 
         live_price = feed_data[first_segment][SECURITY_ID]["last_price"]
 
-        # =============================================
-        # PRINT LIVE PRICE ONLY WHEN CHANGED
-        # =============================================
+        live_price = float(live_price)
 
-        print(f"\rLIVE BANKNIFTY = {live_price}", end="", flush=True)
+        # =================================================
+        # LIVE PRICE IN SAME LINE
+        # =================================================
 
-        # =============================================
+        if live_price != last_print_price:
+
+            print(
+                f"\rLIVE BANKNIFTY = {live_price}",
+                end="",
+                flush=True
+            )
+
+            last_print_price = live_price
+
+        # =================================================
         # BUILD 5M CANDLE
-        # =============================================
+        # =================================================
 
         current_5m = now.minute // 5
 
         if last_5m_bucket is None:
+
             last_5m_bucket = current_5m
 
             candle_open = live_price
             candle_high = live_price
             candle_low = live_price
+            candle_close = live_price
+
+        # =============================================
+        # SAME 5M CANDLE
+        # =============================================
 
         if current_5m == last_5m_bucket:
 
@@ -120,14 +138,14 @@ while True:
             candle_low = min(candle_low, live_price)
             candle_close = live_price
 
+        # =============================================
+        # NEW 5M CANDLE STARTED
+        # =============================================
+
         else:
 
-            # =========================================
-            # 5M CANDLE CLOSED
-            # =========================================
-
             print(
-                f"5M CLOSED -> "
+                f"\n5M CLOSED -> "
                 f"O={candle_open} "
                 f"H={candle_high} "
                 f"L={candle_low} "
@@ -135,19 +153,23 @@ while True:
                 flush=True
             )
 
+            # =========================================
+            # SAVE 5M CANDLE
+            # =========================================
+
             prices_5m.append({
-                "open": candle_open,
-                "high": candle_high,
-                "low": candle_low,
-                "close": candle_close
+                "open": float(candle_open),
+                "high": float(candle_high),
+                "low": float(candle_low),
+                "close": float(candle_close)
             })
 
-            # Keep last 6 candles only
+            # KEEP LAST 6 CANDLES ONLY
             if len(prices_5m) > 6:
                 prices_5m.pop(0)
 
             # =========================================
-            # EVERY 30 MIN UPDATE LEVELS
+            # EVERY 30 MIN CREATE LEVELS
             # =========================================
 
             current_30m = now.minute // 30
@@ -159,14 +181,23 @@ while True:
 
                 if len(prices_5m) == 6:
 
-                    highs = [x["high"] for x in prices_5m]
-                    lows = [x["low"] for x in prices_5m]
+                    highs = [
+                        candle["high"]
+                        for candle in prices_5m
+                        if isinstance(candle, dict)
+                    ]
+
+                    lows = [
+                        candle["low"]
+                        for candle in prices_5m
+                        if isinstance(candle, dict)
+                    ]
 
                     level_high = max(highs)
                     level_low = min(lows)
 
                     print(
-                        f"NEW 30M LEVELS -> "
+                        f"\nNEW 30M LEVELS -> "
                         f"HIGH={level_high} "
                         f"LOW={level_low}",
                         flush=True
@@ -194,7 +225,7 @@ while True:
                     trail_sl = sl_price
 
                     print(
-                        f"LONG ENTRY = {entry_price} | "
+                        f"\nLONG ENTRY = {entry_price} | "
                         f"SL={sl_price} | "
                         f"TARGET={target_price}",
                         flush=True
@@ -214,14 +245,14 @@ while True:
                     trail_sl = sl_price
 
                     print(
-                        f"SHORT ENTRY = {entry_price} | "
+                        f"\nSHORT ENTRY = {entry_price} | "
                         f"SL={sl_price} | "
                         f"TARGET={target_price}",
                         flush=True
                     )
 
             # =========================================
-            # RESET NEW 5M CANDLE
+            # START NEW 5M CANDLE
             # =========================================
 
             candle_open = live_price
@@ -231,87 +262,91 @@ while True:
 
             last_5m_bucket = current_5m
 
-        # =============================================
-        # TRAILING SL MANAGEMENT
-        # =============================================
+        # =================================================
+        # TRAILING SL
+        # =================================================
 
         if trade_running:
 
-            # =========================================
+            # =============================================
             # LONG TRADE
-            # =========================================
+            # =============================================
 
             if trade_side == "LONG":
 
                 profit = live_price - entry_price
 
+                # TRAILING START
                 if profit >= TRAIL_START:
 
                     new_trail = live_price - TRAIL_GAP
 
                     if new_trail > trail_sl:
+
                         trail_sl = new_trail
 
                         print(
-                            f"LONG TRAIL SL UPDATED = {trail_sl}",
+                            f"\nLONG TRAIL SL = {trail_sl}",
                             flush=True
                         )
 
-                # EXIT CONDITIONS
-
+                # EXIT TRAIL
                 if live_price <= trail_sl:
 
                     print(
-                        f"LONG EXIT TRAIL SL = {live_price}",
+                        f"\nLONG EXIT TRAIL SL = {live_price}",
                         flush=True
                     )
 
                     trade_running = False
 
+                # TARGET HIT
                 elif live_price >= target_price:
 
                     print(
-                        f"LONG TARGET HIT = {live_price}",
+                        f"\nLONG TARGET HIT = {live_price}",
                         flush=True
                     )
 
                     trade_running = False
 
-            # =========================================
+            # =============================================
             # SHORT TRADE
-            # =========================================
+            # =============================================
 
             elif trade_side == "SHORT":
 
                 profit = entry_price - live_price
 
+                # TRAILING START
                 if profit >= TRAIL_START:
 
                     new_trail = live_price + TRAIL_GAP
 
                     if new_trail < trail_sl:
+
                         trail_sl = new_trail
 
                         print(
-                            f"SHORT TRAIL SL UPDATED = {trail_sl}",
+                            f"\nSHORT TRAIL SL = {trail_sl}",
                             flush=True
                         )
 
-                # EXIT CONDITIONS
-
+                # EXIT TRAIL
                 if live_price >= trail_sl:
 
                     print(
-                        f"SHORT EXIT TRAIL SL = {live_price}",
+                        f"\nSHORT EXIT TRAIL SL = {live_price}",
                         flush=True
                     )
 
                     trade_running = False
 
+                # TARGET HIT
                 elif live_price <= target_price:
 
                     print(
-                        f"SHORT TARGET HIT = {live_price}",
+                        f"\nSHORT TARGET HIT = {live_price}",
                         flush=True
                     )
 
@@ -321,6 +356,6 @@ while True:
 
     except Exception as e:
 
-        print("ERROR =", e, flush=True)
+        print(f"\nERROR = {e}", flush=True)
 
         time.sleep(5)
