@@ -1,7 +1,3 @@
-scipy
-mibian
-numpy
-pandas
+dhanhq
+requests
 websocket-client==1.6.1
-dhanhq==2.2.0
-Dhan-Tradehull==3.0.6

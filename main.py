@@ -1,11 +1,18 @@
 import os
 import time
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 print("STARTED", flush=True)
 
-from Dhan_Tradehull import Tradehull
+# =========================================
+# IMPORT AFTER START
+# =========================================
 
-print("TRADEHULL IMPORTED", flush=True)
+from dhanhq import dhanhq
+
+print("DHANHQ IMPORTED", flush=True)
 
 # =========================================
 # ENV
@@ -14,39 +21,48 @@ print("TRADEHULL IMPORTED", flush=True)
 client_id = os.getenv("DHAN_CLIENT_ID")
 access_token = os.getenv("DHAN_ACCESS_TOKEN")
 
-print("CLIENT ID :", client_id, flush=True)
-print("TOKEN FOUND :", bool(access_token), flush=True)
+print("CLIENT ID LOADED", flush=True)
+print("TOKEN LOADED", flush=True)
 
 # =========================================
 # LOGIN
 # =========================================
 
-print("CONNECTING...", flush=True)
-
-tsl = Tradehull(
+dhan = dhanhq(
     client_id,
-    access_token,
-    mode="access_token"
+    access_token
 )
 
-print("CONNECTED", flush=True)
+print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
-# LOOP
+# TEST LOOP
 # =========================================
 
 while True:
 
     try:
 
-        print("FETCHING...", flush=True)
+        print("\n====================", flush=True)
 
-        live_data = tsl.get_ltp_data("BANKNIFTY")
+        current_time = datetime.now(
+            ZoneInfo("Asia/Kolkata")
+        ).strftime("%H:%M:%S")
 
-        print("DATA :", live_data, flush=True)
+        print(f"TIME : {current_time}", flush=True)
+
+        data = dhan.quote_data(
+            securities={
+                "IDX_I": ["23"]
+            }
+        )
+
+        print(data, flush=True)
+
+        print("====================", flush=True)
 
     except Exception as e:
 
-        print("ERROR :", e, flush=True)
+        print(f"ERROR : {e}", flush=True)
 
     time.sleep(5)
