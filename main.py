@@ -1,9 +1,10 @@
 import os
 import time
 
-from dhanhq import dhanhq
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+from dhanhq import dhanhq, DhanContext
 
 # =====================================
 # ENV VARIABLES
@@ -19,7 +20,12 @@ print("TOKEN LOADED", flush=True)
 # DHAN CONNECTION
 # =====================================
 
-dhan = dhanhq(access_token)
+dhan_context = DhanContext(
+    client_id,
+    access_token
+)
+
+dhan = dhanhq(dhan_context)
 
 print("CONNECTED TO DHAN", flush=True)
 
