@@ -7,6 +7,9 @@ print("START", flush=True)
 CLIENT_ID = os.environ["DHAN_CLIENT_ID"]
 ACCESS_TOKEN = os.environ["DHAN_ACCESS_TOKEN"]
 
+print("CLIENT_ID =", CLIENT_ID, flush=True)
+print("TOKEN_START =", ACCESS_TOKEN[:15], flush=True)
+
 print("ENV LOADED", flush=True)
 
 headers = {
