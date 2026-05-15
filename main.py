@@ -1,16 +1,11 @@
+import requests
 import os
 import time
-import requests
 
-print("START", flush=True)
+print("SCRIPT STARTED", flush=True)
 
-CLIENT_ID = os.environ["DHAN_CLIENT_ID"]
-ACCESS_TOKEN = os.environ["DHAN_ACCESS_TOKEN"]
-
-print("CLIENT_ID =", CLIENT_ID, flush=True)
-print("TOKEN_START =", ACCESS_TOKEN[:15], flush=True)
-
-print("ENV LOADED", flush=True)
+CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
+ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
 headers = {
     "access-token": ACCESS_TOKEN,
@@ -19,7 +14,7 @@ headers = {
     "Accept": "application/json"
 }
 
-print("HEADERS READY", flush=True)
+url = "https://api.dhan.co/v2/marketfeed/ltp"
 
 payload = {
     "MCX_COMM": [114]
@@ -27,19 +22,19 @@ payload = {
 
 while True:
 
+    response = requests.post(
+        url,
+        headers=headers,
+        json=payload
+    )
+
+    data = response.json()
+
     try:
-
-        response = requests.post(
-            "https://api.dhan.co/v2/marketfeed/ltp",
-            headers=headers,
-            json=payload
-        )
-
-        print("====================", flush=True)
-        print("STATUS:", response.status_code, flush=True)
-        print(response.text, flush=True)
+        price = data["data"]["MCX_COMM"]["114"]["last_price"]
+        print("LIVE PRICE =", price, flush=True)
 
     except Exception as e:
-        print("ERROR:", e, flush=True)
+        print("ERROR =", data, flush=True)
 
-    time.sleep(60)
+    time.sleep(2)
