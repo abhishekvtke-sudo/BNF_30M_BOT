@@ -46,7 +46,7 @@ while True:
 
         data = dhan.quote_data(
             securities={
-                "IDX_I": [25]
+                "NSE_IDX": [25]
             }
         )
 
