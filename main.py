@@ -99,7 +99,7 @@ while True:
         # PRINT LIVE PRICE ONLY WHEN CHANGED
         # =============================================
 
-        print(f"LIVE BANKNIFTY = {live_price}", flush=True)
+        print(f"\rLIVE BANKNIFTY = {live_price}", end="", flush=True)
 
         # =============================================
         # BUILD 5M CANDLE
