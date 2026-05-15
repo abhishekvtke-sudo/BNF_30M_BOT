@@ -66,7 +66,7 @@ while True:
 
         data = dhan.ticker_data(
             {
-                "IDX_I":[23]
+                "IDX_I":[25]
                 
                 }
         )
