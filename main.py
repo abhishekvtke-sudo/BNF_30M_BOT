@@ -138,7 +138,7 @@ while True:
             time.sleep(10)
             continue
 
-        if now.hour > 15 or (now.hour == 15 and now.minute > 15):
+        if now.hour > 15 or (now.hour == 23 and now.minute > 15):
 
             print("MARKET CLOSED", flush=True)
             break
