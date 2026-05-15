@@ -7,12 +7,8 @@ from config import CLIENT_ID, ACCESS_TOKEN
 # SETTINGS
 # =========================================
 
-SYMBOL = "GOLDM JUN FUT"
-
 SECURITY_ID = 491727
-EXCHANGE_SEGMENT = "MCX_COMM"
-
-QTY = 1
+SEGMENT = "MCX_COMM"
 
 SL_POINTS = 75
 TP_POINTS = 1500
@@ -31,96 +27,83 @@ headers = {
 }
 
 # =========================================
-# URLS
+# API
 # =========================================
 
-HISTORICAL_URL = "https://api.dhan.co/v2/charts/intraday"
+LTP_URL = "https://api.dhan.co/v2/marketfeed/ltp"
 
 # =========================================
-# TRADE VARIABLES
+# VARIABLES
 # =========================================
 
 trade_running = False
 trade_side = None
 
 entry_price = 0
-sl_price = 0
-tp_price = 0
 trail_sl = 0
+tp_price = 0
 
-last_5m_time = None
+# 5M candle
+five_open = None
+five_high = None
+five_low = None
+five_close = None
+
+# 30M candle
+thirty_high = None
+thirty_low = None
+
+current_5m_block = None
+current_30m_block = None
 
 # =========================================
-# GET CANDLES
+# GET LIVE PRICE
 # =========================================
 
-def get_candles(interval):
+def get_ltp():
 
     payload = {
-        "securityId": str(SECURITY_ID),
-        "exchangeSegment": EXCHANGE_SEGMENT,
-        "instrument": "FUTCOM",
-        "interval": interval
+        SEGMENT: [SECURITY_ID]
     }
 
     response = requests.post(
-        HISTORICAL_URL,
+        LTP_URL,
         json=payload,
         headers=headers
     )
 
     data = response.json()
 
-    print(data, flush=True)
+    ltp = data["data"][SEGMENT][str(SECURITY_ID)]["last_price"]
 
-    return data
-
-# =========================================
-# GET LATEST 30M LEVELS
-# =========================================
-
-def get_30m_levels():
-
-    data = get_candles("30")
-
-    candles = data["data"]
-
-    highs = candles["high"]
-    lows = candles["low"]
-
-    last_high = highs[-2]
-    last_low = lows[-2]
-
-    return float(last_high), float(last_low)
+    return float(ltp)
 
 # =========================================
-# GET LATEST 5M CANDLE
+# GET 5M BLOCK
 # =========================================
 
-def get_latest_5m():
+def get_5m_block():
 
-    data = get_candles("5")
+    now = datetime.now()
 
-    candles = data["data"]
+    minute = (now.minute // 5) * 5
 
-    opens = candles["open"]
-    highs = candles["high"]
-    lows = candles["low"]
-    closes = candles["close"]
-    times = candles["start_Time"]
-
-    latest = {
-        "time": times[-2],
-        "open": float(opens[-2]),
-        "high": float(highs[-2]),
-        "low": float(lows[-2]),
-        "close": float(closes[-2])
-    }
-
-    return latest
+    return f"{now.hour}:{minute}"
 
 # =========================================
-# MAIN LOOP
+# GET 30M BLOCK
+# =========================================
+
+def get_30m_block():
+
+    now = datetime.now()
+
+    minute = (now.minute // 30) * 30
+
+    return f"{now.hour}:{minute}"
+
+# =========================================
+# START
 # =========================================
 
 print("30M BREAKOUT BOT STARTED", flush=True)
@@ -129,175 +112,203 @@ while True:
 
     try:
 
-        now = datetime.now()
+        ltp = get_ltp()
+
+        print(f"LIVE GOLD PRICE = {ltp}", flush=True)
 
         # =====================================
-        # MARKET TIME
+        # BUILD 5M CANDLE
         # =====================================
 
-        if now.hour < 9 or (now.hour == 9 and now.minute < 15):
+        new_5m_block = get_5m_block()
 
-            time.sleep(10)
-            continue
+        if current_5m_block != new_5m_block:
 
-        if now.hour > 23 or (now.hour == 23 and now.minute > 15):
+            # Previous candle completed
+            if five_close is not None:
 
-            print("MARKET CLOSED", flush=True)
-            break
+                print(
+                    f"5M CLOSED -> "
+                    f"O={five_open} "
+                    f"H={five_high} "
+                    f"L={five_low} "
+                    f"C={five_close}",
+                    flush=True
+                )
+
+                # =================================
+                # ENTRY LOGIC
+                # =================================
+
+                if (
+                    not trade_running and
+                    thirty_high is not None and
+                    five_close > thirty_high
+                ):
+
+                    trade_running = True
+                    trade_side = "LONG"
+
+                    entry_price = five_close
+
+                    trail_sl = entry_price - SL_POINTS
+                    tp_price = entry_price + TP_POINTS
+
+                    print(
+                        f"LONG ENTRY = {entry_price}",
+                        flush=True
+                    )
+
+                elif (
+                    not trade_running and
+                    thirty_low is not None and
+                    five_close < thirty_low
+                ):
+
+                    trade_running = True
+                    trade_side = "SHORT"
+
+                    entry_price = five_close
+
+                    trail_sl = entry_price + SL_POINTS
+                    tp_price = entry_price - TP_POINTS
+
+                    print(
+                        f"SHORT ENTRY = {entry_price}",
+                        flush=True
+                    )
+
+            # Start new candle
+            current_5m_block = new_5m_block
+
+            five_open = ltp
+            five_high = ltp
+            five_low = ltp
+            five_close = ltp
+
+        else:
+
+            five_high = max(five_high, ltp)
+            five_low = min(five_low, ltp)
+            five_close = ltp
 
         # =====================================
-        # GET LEVELS
+        # BUILD 30M LEVELS
         # =====================================
 
-        level_high, level_low = get_30m_levels()
+        new_30m_block = get_30m_block()
 
-        print(f"\n30M HIGH = {level_high}", flush=True)
-        print(f"30M LOW = {level_low}", flush=True)
+        if current_30m_block != new_30m_block:
 
-        # =====================================
-        # GET LATEST 5M CANDLE
-        # =====================================
+            current_30m_block = new_30m_block
 
-        candle_5m = get_latest_5m()
+            thirty_high = five_high
+            thirty_low = five_low
 
-        candle_time = candle_5m["time"]
+            print(
+                f"\nNEW 30M LEVELS -> "
+                f"HIGH={thirty_high} "
+                f"LOW={thirty_low}",
+                flush=True
+            )
 
-        # Skip duplicate candle
-        if candle_time == last_5m_time:
+        else:
 
-            time.sleep(10)
-            continue
-
-        last_5m_time = candle_time
-
-        close_price = candle_5m["close"]
-
-        print(f"5M CLOSE = {close_price}", flush=True)
-
-        # =====================================
-        # ENTRY LOGIC
-        # =====================================
-
-        if not trade_running:
-
-            # LONG ENTRY
-            if close_price > level_high:
-
-                trade_running = True
-                trade_side = "LONG"
-
-                entry_price = close_price
-
-                sl_price = entry_price - SL_POINTS
-                tp_price = entry_price + TP_POINTS
-
-                trail_sl = sl_price
-
-                print("\nLONG ENTRY", flush=True)
-                print(f"ENTRY = {entry_price}", flush=True)
-                print(f"SL = {trail_sl}", flush=True)
-                print(f"TP = {tp_price}", flush=True)
-
-            # SHORT ENTRY
-            elif close_price < level_low:
-
-                trade_running = True
-                trade_side = "SHORT"
-
-                entry_price = close_price
-
-                sl_price = entry_price + SL_POINTS
-                tp_price = entry_price - TP_POINTS
-
-                trail_sl = sl_price
-
-                print("\nSHORT ENTRY", flush=True)
-                print(f"ENTRY = {entry_price}", flush=True)
-                print(f"SL = {trail_sl}", flush=True)
-                print(f"TP = {tp_price}", flush=True)
+            thirty_high = max(thirty_high, ltp)
+            thirty_low = min(thirty_low, ltp)
 
         # =====================================
         # TRADE MANAGEMENT
         # =====================================
 
-        else:
+        if trade_running:
 
-            current_price = close_price
-
-            # =================================
             # LONG
-            # =================================
-
             if trade_side == "LONG":
 
-                profit = current_price - entry_price
+                profit = ltp - entry_price
 
-                # TRAILING
+                # Trailing
                 if profit >= TRAIL_START:
 
-                    new_sl = current_price - TRAIL_GAP
+                    new_sl = ltp - TRAIL_GAP
 
                     if new_sl > trail_sl:
 
                         trail_sl = new_sl
 
-                        print(f"TRAIL SL = {trail_sl}", flush=True)
+                        print(
+                            f"TRAIL SL = {trail_sl}",
+                            flush=True
+                        )
 
                 # SL HIT
-                if current_price <= trail_sl:
+                if ltp <= trail_sl:
 
-                    print(f"LONG SL HIT = {current_price}", flush=True)
+                    print(
+                        f"LONG EXIT SL = {ltp}",
+                        flush=True
+                    )
 
                     trade_running = False
 
                 # TP HIT
-                elif current_price >= tp_price:
+                elif ltp >= tp_price:
 
-                    print(f"LONG TP HIT = {current_price}", flush=True)
+                    print(
+                        f"LONG EXIT TP = {ltp}",
+                        flush=True
+                    )
 
                     trade_running = False
 
-            # =================================
             # SHORT
-            # =================================
-
             elif trade_side == "SHORT":
 
-                profit = entry_price - current_price
+                profit = entry_price - ltp
 
-                # TRAILING
+                # Trailing
                 if profit >= TRAIL_START:
 
-                    new_sl = current_price + TRAIL_GAP
+                    new_sl = ltp + TRAIL_GAP
 
                     if new_sl < trail_sl:
 
                         trail_sl = new_sl
 
-                        print(f"TRAIL SL = {trail_sl}", flush=True)
+                        print(
+                            f"TRAIL SL = {trail_sl}",
+                            flush=True
+                        )
 
                 # SL HIT
-                if current_price >= trail_sl:
+                if ltp >= trail_sl:
 
-                    print(f"SHORT SL HIT = {current_price}", flush=True)
+                    print(
+                        f"SHORT EXIT SL = {ltp}",
+                        flush=True
+                    )
 
                     trade_running = False
 
                 # TP HIT
-                elif current_price <= tp_price:
+                elif ltp <= tp_price:
 
-                    print(f"SHORT TP HIT = {current_price}", flush=True)
+                    print(
+                        f"SHORT EXIT TP = {ltp}",
+                        flush=True
+                    )
 
                     trade_running = False
 
         # =====================================
-        # WAIT
+        # LOOP SPEED
         # =====================================
 
-        time.sleep(10)
+        time.sleep(5)
 
     except Exception as e:
 
         print(f"ERROR = {e}", flush=True)
 
-        time.sleep(10)
+        time.sleep(5)
