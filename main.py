@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from dhanhq import DhanContext, dhanhq
+from Dhan_Tradehull import Tradehull
 
 # =========================================
 # LOAD ENV VARIABLES
@@ -20,12 +20,11 @@ print("TOKEN LOADED", flush=True)
 # CONNECT TO DHAN
 # =========================================
 
-dhan_context = DhanContext(
+tsl = Tradehull(
     client_id,
-    access_token
+    access_token,
+    mode="access_token"
 )
-
-dhan = dhanhq(dhan_context)
 
 print("CONNECTED TO DHAN", flush=True)
 
@@ -46,19 +45,34 @@ while True:
         )
 
         # =====================================
-        # BANKNIFTY QUOTE
-        # SECURITY ID = 23
+        # LIVE BANKNIFTY DATA
         # =====================================
 
-        data = dhan.quote_data(
-            securities={
-                "INDEX": ["BANKNIFTY"]
-            }
-        )
+        live_data = tsl.get_ltp_data("BANKNIFTY")
+
+        # =====================================
+        # CHECK DATA
+        # =====================================
+
+        if not live_data:
+
+            print("NO LIVE DATA", flush=True)
+
+            time.sleep(1)
+
+            continue
+
+        # =====================================
+        # EXTRACT LTP
+        # =====================================
+
+        ltp = float(list(live_data.values())[0])
 
         print("BANKNIFTY DATA :", flush=True)
 
-        print(data, flush=True)
+        print(live_data, flush=True)
+
+        print(f"LIVE LTP : {ltp}", flush=True)
 
         print("==============================", flush=True)
 
