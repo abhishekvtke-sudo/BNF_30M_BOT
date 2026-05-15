@@ -20,6 +20,8 @@ print("TOKEN LOADED", flush=True)
 # CONNECT TO DHAN
 # =========================================
 
+print("CONNECTING TO DHAN...", flush=True)
+
 tsl = Tradehull(
     client_id,
     access_token,
@@ -44,29 +46,37 @@ while True:
             flush=True
         )
 
+        print("FETCHING LIVE DATA...", flush=True)
+
         # =====================================
         # LIVE DATA
         # =====================================
 
         live_data = tsl.get_ltp_data("BANKNIFTY")
 
+        print("RAW DATA RECEIVED", flush=True)
+
+        # =====================================
+        # CHECK DATA
+        # =====================================
+
         if not live_data:
+
+            print("NO LIVE DATA", flush=True)
 
             time.sleep(1)
 
             continue
 
         # =====================================
-        # LTP
+        # EXTRACT LTP
         # =====================================
 
         ltp = float(list(live_data.values())[0])
 
-        print("BANKNIFTY DATA :", flush=True)
+        print(f"LIVE LTP : {ltp}", flush=True)
 
         print(live_data, flush=True)
-
-        print(f"LIVE LTP : {ltp}", flush=True)
 
         print("==============================", flush=True)
 
