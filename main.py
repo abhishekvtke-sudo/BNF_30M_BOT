@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from dhanhq import dhanhq
+from dhanhq import dhanhq, DhanContext
 
 # =========================================
 # ENV VARIABLES
@@ -20,7 +20,12 @@ print("TOKEN LOADED", flush=True)
 # CONNECT TO DHAN
 # =========================================
 
-dhan = dhanhq(access_token)
+dhan_context = DhanContext(
+    client_id,
+    access_token
+)
+
+dhan = dhanhq(dhan_context)
 
 print("CONNECTED TO DHAN", flush=True)
 
@@ -41,7 +46,7 @@ while True:
         )
 
         # =====================================
-        # BANKNIFTY INDEX LTP
+        # BANKNIFTY LTP
         # =====================================
 
         data = dhan.ltp_data(
@@ -51,7 +56,6 @@ while True:
         )
 
         print("BANKNIFTY DATA :", flush=True)
-
         print(data, flush=True)
 
         print("========================", flush=True)
