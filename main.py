@@ -4,4 +4,4 @@ print("BOT STARTED")
 
 while True:
     print("WORKING")
-    time.sleep(10)
+    time.sleep(15)
