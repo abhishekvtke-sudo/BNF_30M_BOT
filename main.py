@@ -1,8 +1,13 @@
 import os
-from dhanhq import dhanhq, DhanContext, marketfeed
+import time
+
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from dhanhq import DhanContext, dhanhq
 
 # =========================================
-# LOAD ENV VARIABLES
+# ENV VARIABLES
 # =========================================
 
 client_id = os.environ["DHAN_CLIENT_ID"]
@@ -12,7 +17,7 @@ print("CLIENT ID LOADED", flush=True)
 print("TOKEN LOADED", flush=True)
 
 # =========================================
-# DHAN CONTEXT
+# CONNECT DHAN
 # =========================================
 
 dhan_context = DhanContext(
@@ -25,36 +30,39 @@ dhan = dhanhq(dhan_context)
 print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
-# INSTRUMENTS
+# LIVE LOOP
 # =========================================
 
-instruments = [
-    ("IDX_I", "25", 17)
-]
+while True:
 
-# =========================================
-# CALLBACKS
-# =========================================
+    try:
 
-def on_connect(instance):
-    print("CONNECTED TO LIVE FEED", flush=True)
+        print("\n========================", flush=True)
 
-def on_message(instance, message):
-    print("BANKNIFTY DATA :", flush=True)
-    print(message, flush=True)
+        print(
+            f"TIME : "
+            f"{datetime.now(ZoneInfo('Asia/Kolkata')).strftime('%H:%M:%S')}",
+            flush=True
+        )
 
-# =========================================
-# START FEED
-# =========================================
+        # =====================================
+        # BANKNIFTY INDEX
+        # =====================================
 
-feed = marketfeed.DhanFeed(
-    client_id,
-    access_token,
-    instruments,
-    on_connect=on_connect,
-    on_message=on_message
-)
+        data = dhan.quote_data(
+            securities={
+                "IDX_I": [25]
+            }
+        )
 
-print("STARTED", flush=True)
+        print("BANKNIFTY DATA :", flush=True)
 
-feed.run_forever()
+        print(data, flush=True)
+
+        print("========================", flush=True)
+
+    except Exception as e:
+
+        print(f"ERROR : {e}", flush=True)
+
+    time.sleep(1)
