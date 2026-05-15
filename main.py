@@ -29,7 +29,7 @@ print("CONNECTED TO DHAN", flush=True)
 # =========================================
 
 instruments = [
-    (marketfeed.IDX_I, "25", 17)
+    ("IDX_I", "25", 17)
 ]
 
 # =========================================
