@@ -2,5 +2,6 @@ scipy
 mibian
 numpy
 pandas
+websocket-client==1.6.1
 dhanhq==2.2.0
-Dhan-Tradehull
+Dhan-Tradehull==3.0.6
