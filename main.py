@@ -1,7 +1,7 @@
 import requests
 import time
 from datetime import datetime
-from config import CLIENT_CODE, ACCESS_TOKEN
+from config import CLIENT_ID, ACCESS_TOKEN
 
 # ============================================
 # CONFIG
@@ -19,7 +19,7 @@ TARGET_POINTS = 1500
 
 headers = {
     "access-token": ACCESS_TOKEN,
-    "client-id": CLIENT_CODE,
+    "client-id": CLIENT_ID,
     "Content-Type": "application/json"
 }
 
