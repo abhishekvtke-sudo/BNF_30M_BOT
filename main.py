@@ -44,7 +44,7 @@ while True:
             flush=True
         )
 
-        data = dhan.quote_data(
+        data = dhan.ticker_data(
             securities={
                 "NSE_IDX": [25]
             }
