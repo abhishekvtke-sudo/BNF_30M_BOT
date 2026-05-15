@@ -22,7 +22,7 @@ headers = {
 print("HEADERS READY", flush=True)
 
 payload = {
-    "NSE_EQ": [1333]
+    "NSE_IDX": [25]
 }
 
 while True:
