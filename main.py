@@ -21,8 +21,12 @@ dhan = dhanhq(context)
 
 print("DHAN OBJECT CREATED", flush=True)
 
+response = dhan.ltp_data({
+    "NSE_IDX": [25]
+})
+
+print(response, flush=True)
+
 while True:
-
     print("LOOP OK", flush=True)
-
     time.sleep(1)
