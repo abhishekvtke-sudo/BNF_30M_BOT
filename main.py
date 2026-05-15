@@ -71,6 +71,8 @@ def get_candles(interval):
 
     data = response.json()
 
+    print(data, flush=True)
+
     return data
 
 # =========================================
