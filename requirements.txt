@@ -1,2 +1,2 @@
-dhanhq==2.2.0
-websocket-client==1.6.1
+dhanhq
+websocket-client
