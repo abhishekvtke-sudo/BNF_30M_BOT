@@ -1,5 +1,5 @@
 import os
-from dhanhq import dhanhq, marketfeed
+from dhanhq import dhanhq, DhanContext, marketfeed
 
 # =========================================
 # LOAD ENV VARIABLES
@@ -12,10 +12,15 @@ print("CLIENT ID LOADED", flush=True)
 print("TOKEN LOADED", flush=True)
 
 # =========================================
-# CONNECT TO DHAN
+# DHAN CONTEXT
 # =========================================
 
-dhan = dhanhq(access_token)
+dhan_context = DhanContext(
+    client_id,
+    access_token
+)
+
+dhan = dhanhq(dhan_context)
 
 print("CONNECTED TO DHAN", flush=True)
 
@@ -32,14 +37,14 @@ instruments = [
 # =========================================
 
 def on_connect(instance):
-    print("CONNECTED TO DHAN LIVE FEED", flush=True)
+    print("CONNECTED TO LIVE FEED", flush=True)
 
 def on_message(instance, message):
     print("BANKNIFTY DATA :", flush=True)
     print(message, flush=True)
 
 # =========================================
-# START LIVE FEED
+# START FEED
 # =========================================
 
 feed = marketfeed.DhanFeed(
