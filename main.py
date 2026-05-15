@@ -2,6 +2,8 @@ import requests
 import time
 import os
 
+print("SCRIPT STARTED")
+
 CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
 
@@ -18,9 +20,9 @@ payload = {
     "MCX_COMM": [491727]
 }
 
-print("SCRIPT STARTED")
-
 while True:
+
+    print("REQUEST SENT")
 
     try:
 
@@ -30,7 +32,11 @@ while True:
             headers=headers
         )
 
+        print("STATUS =", response.status_code)
+
         data = response.json()
+
+        print("FULL DATA =", data)
 
         if response.status_code == 200:
 
@@ -38,13 +44,8 @@ while True:
 
             print("LIVE PRICE =", price)
 
-        else:
-
-            print("ERROR =", data)
-
     except Exception as e:
 
-        print("EXCEPTION =", e)
+        print("ERROR =", e)
 
-    # IMPORTANT
     time.sleep(15)
