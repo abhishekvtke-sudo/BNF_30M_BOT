@@ -1,3 +1,2 @@
 dhanhq==2.2.0
-requests
 websocket-client==1.6.1

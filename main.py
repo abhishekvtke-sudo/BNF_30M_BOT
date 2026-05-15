@@ -1,84 +1,55 @@
 import os
-import time
-
-from datetime import datetime
-from zoneinfo import ZoneInfo
-
-print("STARTED", flush=True)
+from dhanhq import dhanhq, marketfeed
 
 # =========================================
-# IMPORT
+# LOAD ENV VARIABLES
 # =========================================
 
-from dhanhq import dhanhq
-from dhanhq import DhanContext
-
-print("DHANHQ IMPORTED", flush=True)
-
-# =========================================
-# ENV VARIABLES
-# =========================================
-
-client_id = os.getenv("DHAN_CLIENT_ID")
-access_token = os.getenv("DHAN_ACCESS_TOKEN")
+client_id = os.environ["DHAN_CLIENT_ID"]
+access_token = os.environ["DHAN_ACCESS_TOKEN"]
 
 print("CLIENT ID LOADED", flush=True)
 print("TOKEN LOADED", flush=True)
 
 # =========================================
-# CREATE DHAN CONTEXT
-# =========================================
-
-dhan_context = DhanContext(
-    client_id=client_id,
-    access_token=access_token
-)
-
-print("DHAN CONTEXT CREATED", flush=True)
-
-# =========================================
 # CONNECT TO DHAN
 # =========================================
 
-dhan = dhanhq(dhan_context)
+dhan = dhanhq(access_token)
 
 print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
-# LIVE LOOP
+# INSTRUMENTS
 # =========================================
 
-while True:
+instruments = [
+    (marketfeed.IDX_I, "25", 17)
+]
 
-    try:
+# =========================================
+# CALLBACKS
+# =========================================
 
-        print("\n==========================", flush=True)
+def on_connect(instance):
+    print("CONNECTED TO DHAN LIVE FEED", flush=True)
 
-        current_time = datetime.now(
-            ZoneInfo("Asia/Kolkata")
-        ).strftime("%H:%M:%S")
+def on_message(instance, message):
+    print("BANKNIFTY DATA :", flush=True)
+    print(message, flush=True)
 
-        print(f"TIME : {current_time}", flush=True)
+# =========================================
+# START LIVE FEED
+# =========================================
 
-        # =====================================
-        # BANKNIFTY INDEX DATA
-        # =====================================
+feed = marketfeed.DhanFeed(
+    client_id,
+    access_token,
+    instruments,
+    on_connect=on_connect,
+    on_message=on_message
+)
 
-        data = dhan.ticker_data(
-            {
-                "IDX_I":[25]
-                
-                }
-        )
+print("STARTED", flush=True)
 
-        print("BANKNIFTY DATA :", flush=True)
-
-        print(data, flush=True)
-
-        print("==========================", flush=True)
-
-    except Exception as e:
-
-        print(f"ERROR : {e}", flush=True)
-
-    time.sleep(5)
+feed.run_forever()
