@@ -45,25 +45,19 @@ while True:
         )
 
         # =====================================
-        # LIVE BANKNIFTY DATA
+        # LIVE DATA
         # =====================================
 
         live_data = tsl.get_ltp_data("BANKNIFTY")
 
-        # =====================================
-        # CHECK DATA
-        # =====================================
-
         if not live_data:
-
-            print("NO LIVE DATA", flush=True)
 
             time.sleep(1)
 
             continue
 
         # =====================================
-        # EXTRACT LTP
+        # LTP
         # =====================================
 
         ltp = float(list(live_data.values())[0])
