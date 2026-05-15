@@ -27,7 +27,7 @@ headers = {
 # =========================
 
 payload = {
-    "MCX_COMM": ["491727"]
+    "MCX_COMM": [491727]
 }
 
 url = "https://api.dhan.co/v2/marketfeed/ltp"
