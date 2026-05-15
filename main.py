@@ -1,9 +1,28 @@
+import os
 import time
 
-print("SCRIPT STARTED", flush=True)
+from dhanhq import dhanhq, DhanContext
+
+print("START", flush=True)
+
+client_id = os.environ["DHAN_CLIENT_ID"]
+access_token = os.environ["DHAN_ACCESS_TOKEN"]
+
+print("ENV LOADED", flush=True)
+
+context = DhanContext(
+    client_id,
+    access_token
+)
+
+print("CONTEXT CREATED", flush=True)
+
+dhan = dhanhq(context)
+
+print("DHAN OBJECT CREATED", flush=True)
 
 while True:
 
-    print("LOOP RUNNING", flush=True)
+    print("LOOP OK", flush=True)
 
     time.sleep(1)
