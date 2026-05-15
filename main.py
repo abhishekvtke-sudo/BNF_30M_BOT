@@ -1,23 +1,23 @@
 import os
 import time
+
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from dhanhq import DhanContext
-from dhanhq import dhanhq
+from dhanhq import DhanContext, dhanhq
 
 # =========================================
-# ENV VARIABLES
+# LOAD ENV VARIABLES
 # =========================================
 
 client_id = os.environ["DHAN_CLIENT_ID"]
 access_token = os.environ["DHAN_ACCESS_TOKEN"]
 
-print("CLIENT ID LOADED")
-print("TOKEN LOADED")
+print("CLIENT ID LOADED", flush=True)
+print("TOKEN LOADED", flush=True)
 
 # =========================================
-# LOGIN
+# CONNECT TO DHAN
 # =========================================
 
 dhan_context = DhanContext(
@@ -27,41 +27,43 @@ dhan_context = DhanContext(
 
 dhan = dhanhq(dhan_context)
 
-print("CONNECTED TO DHAN")
+print("CONNECTED TO DHAN", flush=True)
 
 # =========================================
-# LOOP
+# LIVE LOOP
 # =========================================
 
 while True:
 
     try:
 
-        india_time = datetime.now(
-            ZoneInfo("Asia/Kolkata")
-        )
-
-        print("\n==============================")
+        print("\n==============================", flush=True)
 
         print(
             f"TIME : "
-            f"{india_time.strftime('%H:%M:%S')}"
+            f"{datetime.now(ZoneInfo('Asia/Kolkata')).strftime('%H:%M:%S')}",
+            flush=True
         )
+
+        # =====================================
+        # BANKNIFTY QUOTE
+        # SECURITY ID = 23
+        # =====================================
 
         data = dhan.quote_data(
             securities={
-                "IDX_I": ["13"]
+                "IDX_I": [23]
             }
         )
 
-        print("BANKNIFTY DATA :")
+        print("BANKNIFTY DATA :", flush=True)
 
-        print(data)
+        print(data, flush=True)
 
-        print("==============================")
+        print("==============================", flush=True)
 
     except Exception as e:
 
-        print(f"ERROR : {e}")
+        print(f"ERROR : {e}", flush=True)
 
     time.sleep(5)
