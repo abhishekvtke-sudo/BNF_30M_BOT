@@ -8,7 +8,7 @@ from config import CLIENT_ID, ACCESS_TOKEN
 # ============================================
 
 SECURITY_ID = 25
-SEGMENT = "NSE_IDX"
+SEGMENT = "IDX_I"
 
 SL_POINTS = 75
 TARGET_POINTS = 1500
