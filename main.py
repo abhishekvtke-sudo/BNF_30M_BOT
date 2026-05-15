@@ -1,8 +1,6 @@
 import requests
-import os
 import time
-
-print("SCRIPT STARTED", flush=True)
+import os
 
 CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
 ACCESS_TOKEN = os.getenv("DHAN_ACCESS_TOKEN")
@@ -20,21 +18,33 @@ payload = {
     "MCX_COMM": [491727]
 }
 
+print("SCRIPT STARTED")
+
 while True:
 
-    response = requests.post(
-        url,
-        headers=headers,
-        json=payload
-    )
-
-    data = response.json()
-
     try:
-        price = data["data"]["MCX_COMM"]["114"]["last_price"]
-        print("LIVE PRICE =", price, flush=True)
+
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers
+        )
+
+        data = response.json()
+
+        if response.status_code == 200:
+
+            price = data["data"]["MCX_COMM"]["491727"]["last_price"]
+
+            print("LIVE PRICE =", price)
+
+        else:
+
+            print("ERROR =", data)
 
     except Exception as e:
-        print("ERROR =", data, flush=True)
 
-    time.sleep(2)
+        print("EXCEPTION =", e)
+
+    # IMPORTANT
+    time.sleep(15)
