@@ -297,11 +297,12 @@ while True:
 
         option_data = None
 
-        if live_price != last_option_fetch_price:
+        rounded_price = round(live_price)
+        if rounded_price != last_option_fetch_price:
 
            option_data = get_atm_options(live_price)
 
-           last_option_fetch_price = live_price
+           last_option_fetch_price = rounded_price
 
         if option_data is None:
 
