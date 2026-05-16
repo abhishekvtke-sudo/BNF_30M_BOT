@@ -18,37 +18,44 @@ OPTION_TARGET = 20
 TRAIL_START = 10
 TRAIL_GAP = 5
 
-OPTION_CHAIN_REFRESH = 60
+EXPIRY = "2026-05-26"
 
 # =========================================================
-# API URLS
+# URLS
 # =========================================================
 
-BASE_URL = "https://api.dhan.co/v2"
+LTP_URL = "https://api.dhan.co/v2/marketfeed/ltp"
 
-LTP_URL = f"{BASE_URL}/marketfeed/ltp"
-
-OPTION_CHAIN_URL = f"{BASE_URL}/optionchain"
-
-EXPIRY_LIST_URL = f"{BASE_URL}/optionchain/expirylist"
+OPTION_CHAIN_URL = "https://api.dhan.co/v2/optionchain"
 
 # =========================================================
 # HEADERS
 # =========================================================
 
 headers = {
+
     "access-token": ACCESS_TOKEN,
     "client-id": CLIENT_ID,
-    "Content-Type": "application/json",
-    "Accept": "application/json"
+    "Content-Type": "application/json"
+
 }
 
 # =========================================================
-# PAYLOAD
+# PAYLOADS
 # =========================================================
 
 index_payload = {
-    INDEX_SEGMENT: [INDEX_SECURITY_ID]
+
+    "IDX_I": [25]
+
+}
+
+option_payload = {
+
+    "UnderlyingScrip": 25,
+    "UnderlyingSeg": "IDX_I",
+    "Expiry": EXPIRY
+
 }
 
 # =========================================================
@@ -71,123 +78,109 @@ def write_log(message):
         file.write(final_message + "\n")
 
 # =========================================================
-# FETCH BANKNIFTY PRICE
+# GET BANKNIFTY LTP
 # =========================================================
 
 def get_banknifty_ltp():
 
     response = requests.post(
+
         LTP_URL,
         json=index_payload,
         headers=headers
+
     )
 
     data = response.json()
 
     if "data" not in data:
+
         write_log(f"BAD RESPONSE = {data}")
         return None
 
     if "IDX_I" not in data["data"]:
+
         write_log(f"BAD RESPONSE = {data}")
         return None
 
     live_price = float(
+
         data["data"]["IDX_I"]["25"]["last_price"]
+
     )
 
     return live_price
 
 # =========================================================
-# FETCH EXPIRY LIST
+# GET ATM OPTIONS
 # =========================================================
 
-def get_expiry_list():
-
-    payload = {
-        "UnderlyingScrip": INDEX_SECURITY_ID,
-        "UnderlyingSeg": INDEX_SEGMENT
-    }
+def get_atm_options(live_price):
 
     response = requests.post(
-        EXPIRY_LIST_URL,
-        json=payload,
-        headers=headers
-    )
 
-    data = response.json()
-
-    return data["data"]
-
-# =========================================================
-# FETCH OPTION CHAIN
-# =========================================================
-
-def get_option_chain(expiry):
-
-    payload = {
-        "UnderlyingScrip": INDEX_SECURITY_ID,
-        "UnderlyingSeg": INDEX_SEGMENT,
-        "Expiry": expiry
-    }
-
-    response = requests.post(
         OPTION_CHAIN_URL,
-        json=payload,
+        json=option_payload,
         headers=headers
+
     )
 
     data = response.json()
 
-    return data["data"]
+    if "data" not in data:
 
-# =========================================================
-# ATM CE PE FETCH
-# =========================================================
+        write_log(f"BAD RESPONSE = {data}")
+        return None
 
-def get_atm_options(option_chain_data, live_price):
+    option_data = data["data"]
+
+    if "oc" not in option_data:
+
+        write_log("OC DATA NOT FOUND")
+        return None
+
+    oc = option_data["oc"]
 
     atm_strike = round(
         live_price / 100
     ) * 100
 
-    oc = option_chain_data["oc"]
+    strike_key = None
 
-    strike_key = f"{atm_strike:.6f}"
+    for strike in oc.keys():
 
-    atm_data = oc.get(strike_key)
+        if int(float(strike)) == atm_strike:
 
-    if atm_data is None:
+            strike_key = strike
+            break
 
-        available_strikes = [
-            float(x)
-            for x in oc.keys()
-        ]
+    if strike_key is None:
 
-        nearest = min(
-            available_strikes,
-            key=lambda x: abs(x - atm_strike)
-        )
+        write_log("ATM STRIKE NOT FOUND")
+        return None
 
-        strike_key = f"{nearest:.6f}"
+    ce_data = oc[strike_key]["ce"]
+    pe_data = oc[strike_key]["pe"]
 
-        atm_data = oc[strike_key]
+    ce_security_id = ce_data.get(
+        "security_id"
+    )
 
-        atm_strike = nearest
+    pe_security_id = pe_data.get(
+        "security_id"
+    )
 
-    ce_data = atm_data["ce"]
+    ce_ltp = float(
+        ce_data.get("last_price", 0)
+    )
 
-    pe_data = atm_data["pe"]
-
-    ce_security_id = ce_data["security_id"]
-    pe_security_id = pe_data["security_id"]
-
-    ce_ltp = float(ce_data.get("last_price", 0))
-    pe_ltp = float(pe_data.get("last_price", 0))
+    pe_ltp = float(
+        pe_data.get("last_price", 0)
+    )
 
     return {
 
-        "strike": atm_strike,
+        "atm": atm_strike,
 
         "ce_security_id": ce_security_id,
         "pe_security_id": pe_security_id,
@@ -208,54 +201,31 @@ candle_high = None
 candle_low = None
 candle_close = None
 
-level_high = None
-level_low = None
-
 last_5m_time = None
 last_30m_time = None
+
+level_high = None
+level_low = None
 
 trade_running = False
 trade_side = None
 
 entry_price = None
-exit_price = None
-
 target_price = None
-sl_price = None
 trail_sl = None
 
 day_pnl = 0
 
 last_print_price = None
 
-option_chain_data = None
-last_option_refresh = 0
-
-atm_ce_security_id = None
-atm_pe_security_id = None
-
-atm_ce_ltp = None
-atm_pe_ltp = None
-
-atm_strike = None
-
 # =========================================================
 # START
 # =========================================================
 
-write_log("======================================")
+write_log("")
+write_log("====================================")
 write_log("REAL OPTION PREMIUM BOT STARTED")
-write_log("======================================")
-
-# =========================================================
-# FETCH INITIAL EXPIRY
-# =========================================================
-
-expiry_list = get_expiry_list()
-
-current_expiry = expiry_list[0]
-
-write_log(f"ACTIVE EXPIRY = {current_expiry}")
+write_log("====================================")
 
 # =========================================================
 # MAIN LOOP
@@ -268,79 +238,49 @@ while True:
         now = datetime.now()
 
         # =================================================
-        # FETCH BANKNIFTY
+        # MARKET HOURS FILTER
+        # =================================================
+
+        market_open = (
+
+            (
+                now.hour > 9 or
+                (
+                    now.hour == 9 and
+                    now.minute >= 15
+                )
+            )
+
+            and
+
+            (
+                now.hour < 15 or
+                (
+                    now.hour == 15 and
+                    now.minute <= 30
+                )
+            )
+
+        )
+
+        if not market_open:
+
+            write_log("MARKET CLOSED")
+
+            time.sleep(60)
+
+            continue
+
+        # =================================================
+        # LIVE BANKNIFTY
         # =================================================
 
         live_price = get_banknifty_ltp()
 
         if live_price is None:
+
             time.sleep(5)
             continue
-
-        # =================================================
-        # OPTION CHAIN REFRESH
-        # =================================================
-
-        current_time = time.time()
-
-        if (
-            current_time - last_option_refresh
-            >= OPTION_CHAIN_REFRESH
-        ):
-
-            option_chain_data = get_option_chain(
-                current_expiry
-            )
-
-            atm_data = get_atm_options(
-                option_chain_data,
-                live_price
-            )
-
-            atm_strike = atm_data["strike"]
-
-            atm_ce_security_id = atm_data[
-                "ce_security_id"
-            ]
-
-            atm_pe_security_id = atm_data[
-                "pe_security_id"
-            ]
-
-            atm_ce_ltp = atm_data["ce_ltp"]
-
-            atm_pe_ltp = atm_data["pe_ltp"]
-
-            write_log("")
-            write_log(
-                f"ATM STRIKE = {atm_strike}"
-            )
-
-            write_log(
-                f"ATM CE ID = "
-                f"{atm_ce_security_id}"
-            )
-
-            write_log(
-                f"ATM PE ID = "
-                f"{atm_pe_security_id}"
-            )
-
-            write_log(
-                f"ATM CE PREMIUM = "
-                f"{atm_ce_ltp}"
-            )
-
-            write_log(
-                f"ATM PE PREMIUM = "
-                f"{atm_pe_ltp}"
-            )
-
-            last_option_refresh = current_time
-
-        # =================================================
-        # PRINT LIVE PRICE
-        # =================================================
 
         if live_price != last_print_price:
 
@@ -351,15 +291,47 @@ while True:
             last_print_price = live_price
 
         # =================================================
+        # ATM OPTIONS
+        # =================================================
+
+        option_data = get_atm_options(
+            live_price
+        )
+
+        if option_data is None:
+
+            time.sleep(5)
+            continue
+
+        atm_strike = option_data["atm"]
+
+        atm_ce_ltp = option_data["ce_ltp"]
+        atm_pe_ltp = option_data["pe_ltp"]
+
+        write_log(
+            f"ATM STRIKE = {atm_strike}"
+        )
+
+        write_log(
+            f"ATM CE PREMIUM = {atm_ce_ltp}"
+        )
+
+        write_log(
+            f"ATM PE PREMIUM = {atm_pe_ltp}"
+        )
+
+        # =================================================
         # BUILD 5M CANDLE
         # =================================================
 
         current_5m = (
+
             now.hour,
             now.minute // 5
+
         )
 
-        if last_5m_time != current_5m:
+        if current_5m != last_5m_time:
 
             if candle_open is not None:
 
@@ -373,14 +345,17 @@ while True:
                 })
 
                 write_log(
+
                     f"5M CLOSED -> "
                     f"O={candle_open} "
                     f"H={candle_high} "
                     f"L={candle_low} "
                     f"C={candle_close}"
+
                 )
 
                 if len(prices_5m) > 6:
+
                     prices_5m.pop(0)
 
             candle_open = live_price
@@ -409,29 +384,35 @@ while True:
         # =================================================
 
         valid_30m = (
+
             now.minute == 15 or
             now.minute == 45
+
         )
 
-        current_30m_time = (
+        current_30m = (
             now.hour,
             now.minute
         )
 
         if valid_30m:
 
-            if current_30m_time != last_30m_time:
+            if current_30m != last_30m_time:
 
                 if len(prices_5m) == 6:
 
                     highs = [
+
                         x["high"]
                         for x in prices_5m
+
                     ]
 
                     lows = [
+
                         x["low"]
                         for x in prices_5m
+
                     ]
 
                     level_high = max(highs)
@@ -439,27 +420,29 @@ while True:
 
                     write_log("")
                     write_log(
-                        f"30M LEVELS CREATED"
+                        "30M LEVELS CREATED"
                     )
 
                     write_log(
-                        f"HIGH = {level_high}"
+                        f"30M HIGH = {level_high}"
                     )
 
                     write_log(
-                        f"LOW = {level_low}"
+                        f"30M LOW = {level_low}"
                     )
 
-                last_30m_time = current_30m_time
+                last_30m_time = current_30m
 
         # =================================================
-        # ENTRY
+        # ENTRY CONDITIONS
         # =================================================
 
         if (
+
             trade_running == False and
             level_high is not None and
             level_low is not None
+
         ):
 
             # =============================================
@@ -468,29 +451,31 @@ while True:
 
             if live_price > level_high:
 
+                write_log("")
+                write_log(
+                    "BREAKOUT ABOVE 30M HIGH"
+                )
+
                 trade_running = True
+
                 trade_side = "CE"
 
                 entry_price = atm_ce_ltp
 
-                sl_price = (
-                    entry_price - OPTION_SL
-                )
-
                 target_price = (
-                    entry_price + OPTION_TARGET
+                    entry_price +
+                    OPTION_TARGET
                 )
 
-                trail_sl = sl_price
+                trail_sl = (
+                    entry_price -
+                    OPTION_SL
+                )
 
                 write_log("")
-                write_log("================================")
+                write_log("==========================")
                 write_log("BUY CE")
-                write_log("================================")
-
-                write_log(
-                    f"ATM STRIKE = {atm_strike}"
-                )
+                write_log("==========================")
 
                 write_log(
                     f"ENTRY PREMIUM = "
@@ -498,11 +483,13 @@ while True:
                 )
 
                 write_log(
-                    f"SL = {sl_price}"
+                    f"TARGET = "
+                    f"{target_price}"
                 )
 
                 write_log(
-                    f"TARGET = {target_price}"
+                    f"SL = "
+                    f"{trail_sl}"
                 )
 
             # =============================================
@@ -511,29 +498,31 @@ while True:
 
             elif live_price < level_low:
 
+                write_log("")
+                write_log(
+                    "BREAKOUT BELOW 30M LOW"
+                )
+
                 trade_running = True
+
                 trade_side = "PE"
 
                 entry_price = atm_pe_ltp
 
-                sl_price = (
-                    entry_price - OPTION_SL
-                )
-
                 target_price = (
-                    entry_price + OPTION_TARGET
+                    entry_price +
+                    OPTION_TARGET
                 )
 
-                trail_sl = sl_price
+                trail_sl = (
+                    entry_price -
+                    OPTION_SL
+                )
 
                 write_log("")
-                write_log("================================")
+                write_log("==========================")
                 write_log("BUY PE")
-                write_log("================================")
-
-                write_log(
-                    f"ATM STRIKE = {atm_strike}"
-                )
+                write_log("==========================")
 
                 write_log(
                     f"ENTRY PREMIUM = "
@@ -541,11 +530,13 @@ while True:
                 )
 
                 write_log(
-                    f"SL = {sl_price}"
+                    f"TARGET = "
+                    f"{target_price}"
                 )
 
                 write_log(
-                    f"TARGET = {target_price}"
+                    f"SL = "
+                    f"{trail_sl}"
                 )
 
         # =================================================
@@ -554,51 +545,75 @@ while True:
 
         if trade_running:
 
-            current_option_price = (
-                atm_ce_ltp
-                if trade_side == "CE"
-                else atm_pe_ltp
-            )
+            if trade_side == "CE":
+
+                current_option_price = atm_ce_ltp
+
+            else:
+
+                current_option_price = atm_pe_ltp
 
             move = (
+
                 current_option_price -
                 entry_price
+
             )
 
             # =============================================
-            # TRAILING
+            # TRAIL SL
             # =============================================
 
             if move >= TRAIL_START:
 
-                new_sl = (
+                new_trail = (
+
                     current_option_price -
                     TRAIL_GAP
+
                 )
 
-                if new_sl > trail_sl:
+                if new_trail > trail_sl:
 
-                    trail_sl = new_sl
+                    trail_sl = new_trail
 
                     write_log(
+
                         f"TRAIL SL = "
                         f"{trail_sl}"
+
                     )
+
+            # =============================================
+            # FORCE EXIT
+            # =============================================
+
+            force_exit = (
+
+                now.hour == 15 and
+                now.minute >= 15
+
+            )
 
             # =============================================
             # EXIT
             # =============================================
 
             if (
+
                 current_option_price <= trail_sl or
-                current_option_price >= target_price
+                current_option_price >= target_price or
+                force_exit
+
             ):
 
                 exit_price = current_option_price
 
                 pnl = (
+
                     exit_price -
                     entry_price
+
                 ) * LOT_SIZE
 
                 day_pnl += pnl
@@ -608,28 +623,46 @@ while True:
                 write_log("EXIT TRADE")
                 write_log("================================")
 
+                if force_exit:
+
+                    write_log(
+                        "EXIT REASON = FORCE EXIT 3:15"
+                    )
+
                 write_log(
+
                     f"EXIT PREMIUM = "
                     f"{exit_price}"
+
                 )
 
                 write_log(
+
                     f"TRADE PNL = "
                     f"{pnl}"
+
                 )
 
                 write_log(
+
                     f"DAY PNL = "
                     f"{day_pnl}"
+
                 )
 
                 trade_running = False
                 trade_side = None
 
+        # =================================================
+        # LOOP DELAY
+        # =================================================
+
         time.sleep(5)
 
     except Exception as e:
 
-        write_log(f"ERROR = {e}")
+        write_log(
+            f"ERROR = {e}"
+        )
 
         time.sleep(5)
