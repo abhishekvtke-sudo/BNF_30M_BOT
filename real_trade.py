@@ -814,7 +814,7 @@ while True:
                     "productType": "INTRADAY",
                     "orderType": "MARKET",
                     "validity": "DAY",
-                    "securityId": exit_security_id
+                    "securityId": exit_security_id,
                     "quantity": REAL_QTY,
                     "price": 0
                 }
@@ -827,10 +827,10 @@ while True:
 
             write_log(f"SELL RESPONSE = {response.json()}")
 
-                trade_running = False
-                trade_side = None
+            trade_running = False
+            trade_side = None
 
-        time.sleep(5)
+            time.sleep(5)
 
     except Exception as e:
 
