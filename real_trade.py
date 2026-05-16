@@ -2,14 +2,14 @@ import requests
 import time
 from datetime import datetime, timedelta, time as dt_time
 
-from dhanhq import dhanhq as DhanHQ
+from dhanhq import dhanhq
 from config import CLIENT_ID, ACCESS_TOKEN
 
 # =========================================================
 # DHAN CLIENT
 # =========================================================
 
-dhan = DhanHQ(
+dhan = dhanhq(
     CLIENT_ID,
     ACCESS_TOKEN
 )
