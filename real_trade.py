@@ -120,7 +120,9 @@ while True:
         # =================================================
 
         if now.hour < 9 or (now.hour == 9 and now.minute < 15):
+
             time.sleep(1)
+
             continue
 
         if now.hour > 15 or (now.hour == 15 and now.minute > 15):
@@ -141,11 +143,39 @@ while True:
 
         data = response.json()
 
-        feed_data = data["data"]
+        # =================================================
+        # SAFE DHAN RESPONSE PARSING
+        # =================================================
+
+        feed_data = data.get("data", {})
+
+        if len(feed_data) == 0:
+
+            write_log("NO DATA RECEIVED")
+
+            time.sleep(1)
+
+            continue
 
         first_segment = list(feed_data.keys())[0]
 
-        live_price = feed_data[first_segment][SECURITY_ID]["last_price"]
+        segment_data = feed_data[first_segment]
+
+        security_data = segment_data.get(str(SECURITY_ID))
+
+        if security_data is None:
+
+            security_data = segment_data.get(int(SECURITY_ID))
+
+        if security_data is None:
+
+            write_log("SECURITY DATA NOT FOUND")
+
+            time.sleep(1)
+
+            continue
+
+        live_price = security_data["last_price"]
 
         live_price = float(live_price)
 
@@ -156,6 +186,7 @@ while True:
         atm_strike = round(live_price / 100) * 100
 
         ce_symbol = f"BANKNIFTY {EXPIRY} {atm_strike} CE"
+
         pe_symbol = f"BANKNIFTY {EXPIRY} {atm_strike} PE"
 
         # =================================================
@@ -164,7 +195,10 @@ while True:
 
         if live_price != last_print_price:
 
-            print(f"LIVE BANKNIFTY = {live_price}", flush=True)
+            print(
+                f"LIVE BANKNIFTY = {live_price}",
+                flush=True
+            )
 
             last_print_price = live_price
 
@@ -197,7 +231,9 @@ while True:
         if current_5m_time == last_5m_time:
 
             candle_high = max(candle_high, live_price)
+
             candle_low = min(candle_low, live_price)
+
             candle_close = live_price
 
         # =================================================
@@ -228,6 +264,7 @@ while True:
             # KEEP ONLY LAST 6 CANDLES
 
             if len(prices_5m) > 6:
+
                 prices_5m.pop(0)
 
             # =================================================
@@ -261,6 +298,7 @@ while True:
                         ]
 
                         level_high = max(highs)
+
                         level_low = min(lows)
 
                         write_log(
@@ -289,6 +327,7 @@ while True:
                 if candle_close > level_high:
 
                     trade_running = True
+
                     trade_side = "LONG"
 
                     selected_option = ce_symbol
@@ -301,6 +340,7 @@ while True:
                     entry_price = candle_close
 
                     sl_price = entry_price - SL_POINTS
+
                     target_price = entry_price + TARGET_POINTS
 
                     trail_sl = sl_price
@@ -330,6 +370,7 @@ while True:
                 elif candle_close < level_low:
 
                     trade_running = True
+
                     trade_side = "SHORT"
 
                     selected_option = pe_symbol
@@ -342,6 +383,7 @@ while True:
                     entry_price = candle_close
 
                     sl_price = entry_price + SL_POINTS
+
                     target_price = entry_price - TARGET_POINTS
 
                     trail_sl = sl_price
@@ -369,8 +411,11 @@ while True:
             # =================================================
 
             candle_open = live_price
+
             candle_high = live_price
+
             candle_low = live_price
+
             candle_close = live_price
 
             last_5m_time = current_5m_time
@@ -389,8 +434,6 @@ while True:
 
                 profit = live_price - entry_price
 
-                # START TRAILING
-
                 if profit >= TRAIL_START:
 
                     new_trail = live_price - TRAIL_GAP
@@ -403,7 +446,7 @@ while True:
                             f"LONG TRAIL SL = {trail_sl}"
                         )
 
-                # EXIT TRAIL
+                # EXIT
 
                 if live_price <= trail_sl:
 
@@ -479,8 +522,6 @@ while True:
 
                 profit = entry_price - live_price
 
-                # START TRAILING
-
                 if profit >= TRAIL_START:
 
                     new_trail = live_price + TRAIL_GAP
@@ -493,7 +534,7 @@ while True:
                             f"SHORT TRAIL SL = {trail_sl}"
                         )
 
-                # EXIT TRAIL
+                # EXIT
 
                 if live_price >= trail_sl:
 
