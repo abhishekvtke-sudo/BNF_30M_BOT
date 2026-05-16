@@ -257,7 +257,7 @@ while True:
                 now.hour < 15 or
                 (
                     now.hour == 15 and
-                    now.minute <= 30
+                    now.minute <= 15
                 )
             )
 
@@ -309,14 +309,11 @@ while True:
         atm_pe_ltp = option_data["pe_ltp"]
 
         write_log(
+            
             f"ATM STRIKE = {atm_strike}"
-        )
-
-        write_log(
+        
             f"ATM CE PREMIUM = {atm_ce_ltp}"
-        )
-
-        write_log(
+       
             f"ATM PE PREMIUM = {atm_pe_ltp}"
         )
 
