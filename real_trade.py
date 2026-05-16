@@ -120,31 +120,26 @@ while True:
         # =================================================
         # FETCH LIVE PRICE
         # =================================================
-
         response = requests.post(
-            url,
-            json=payload,
-            headers=headers
+          url,
+          json=payload,
+          headers=headers
         )
 
         data = response.json()
 
         feed_data = data["data"]
 
-        first_segment = list(
-            feed_data.keys()
-        )[0]
+        first_segment = list(feed_data.keys())[0]
 
         segment_data = feed_data[first_segment]
 
-        security_data = segment_data[
-            str(SECURITY_ID)
-        ]
+        security_data = segment_data[0]
 
         live_price = float(
-            security_data["last_price"]
+           security_data["last_price"]
         )
-
+        
         # =================================================
         # PRINT ONLY WHEN PRICE CHANGES
         # =================================================
