@@ -127,6 +127,7 @@ while True:
         )
 
         data = response.json()
+        print(data)
 
         live_price = float(
            data["data"]["NSE_INDICES"]["25"]["last_price"]
