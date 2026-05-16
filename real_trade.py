@@ -10,11 +10,17 @@ from config import CLIENT_ID, ACCESS_TOKEN
 SECURITY_ID = "25"      # BANKNIFTY
 SEGMENT = "IDX_I"
 
+EXPIRY = "26 MAY"
+
 SL_POINTS = 75
 TARGET_POINTS = 1500
 
 TRAIL_START = 200
 TRAIL_GAP = 100
+
+MAX_TRADES_PER_DAY = 4
+
+LOT_SIZE = 30
 
 # =====================================================
 # HEADERS
@@ -31,6 +37,21 @@ url = "https://api.dhan.co/v2/marketfeed/ltp"
 payload = {
     SEGMENT: [int(SECURITY_ID)]
 }
+
+# =====================================================
+# LOG FUNCTION
+# =====================================================
+
+def write_log(message):
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    final_message = f"{timestamp} -> {message}"
+
+    print(final_message, flush=True)
+
+    with open("trade_logs.txt", "a") as f:
+        f.write(final_message + "\n")
 
 # =====================================================
 # VARIABLES
@@ -54,12 +75,22 @@ sl_price = None
 target_price = None
 trail_sl = None
 
+selected_option = None
+
+option_entry_price = None
+option_exit_price = None
+
+DAY_PNL = 0
+
 last_5m_time = None
 last_30m_time = None
 
 last_print_price = None
 
-print("30M BREAKOUT BOT STARTED", flush=True)
+today_trades = 0
+last_reset_day = None
+
+write_log("30M BREAKOUT BOT STARTED")
 
 # =====================================================
 # MAIN LOOP
@@ -72,6 +103,19 @@ while True:
         now = datetime.now()
 
         # =================================================
+        # DAILY RESET
+        # =================================================
+
+        if last_reset_day != now.date():
+
+            today_trades = 0
+            DAY_PNL = 0
+
+            last_reset_day = now.date()
+
+            write_log("DAILY RESET DONE")
+
+        # =================================================
         # MARKET TIME
         # =================================================
 
@@ -80,7 +124,9 @@ while True:
             continue
 
         if now.hour > 15 or (now.hour == 15 and now.minute > 15):
-            print("\nMARKET CLOSED", flush=True)
+
+            write_log("MARKET CLOSED")
+
             break
 
         # =================================================
@@ -104,22 +150,26 @@ while True:
         live_price = float(live_price)
 
         # =================================================
+        # ATM OPTION CALCULATION
+        # =================================================
+
+        atm_strike = round(live_price / 100) * 100
+
+        ce_symbol = f"BANKNIFTY {EXPIRY} {atm_strike} CE"
+        pe_symbol = f"BANKNIFTY {EXPIRY} {atm_strike} PE"
+
+        # =================================================
         # PRINT ONLY WHEN PRICE CHANGES
         # =================================================
 
         if live_price != last_print_price:
 
-            print(
-                f"LIVE BANKNIFTY = {live_price}",
-                flush=True
-            )
+            print(f"LIVE BANKNIFTY = {live_price}", flush=True)
 
             last_print_price = live_price
 
         # =================================================
         # 5 MIN ALIGNMENT
-        # CLOSE ONLY AT:
-        # 10,15,20,25,30,35,40...
         # =================================================
 
         current_5m_time = (
@@ -156,18 +206,17 @@ while True:
 
         else:
 
-            print(
-                f"\n5M CLOSED -> "
+            write_log(
+                f"5M CLOSED -> "
                 f"O={candle_open} "
                 f"H={candle_high} "
                 f"L={candle_low} "
-                f"C={candle_close}",
-                flush=True
+                f"C={candle_close}"
             )
 
-            # =============================================
+            # =================================================
             # SAVE 5M CANDLE
-            # =============================================
+            # =================================================
 
             prices_5m.append({
                 "open": float(candle_open),
@@ -177,18 +226,13 @@ while True:
             })
 
             # KEEP ONLY LAST 6 CANDLES
+
             if len(prices_5m) > 6:
                 prices_5m.pop(0)
 
-            # =============================================
-            # 30M ALIGNMENT
-            # LEVELS ONLY AT:
-            # 9:15
-            # 9:45
-            # 10:15
-            # 10:45
-            # etc
-            # =============================================
+            # =================================================
+            # 30M LEVEL CREATION
+            # =================================================
 
             valid_30m = (
                 now.minute == 15 or
@@ -219,29 +263,40 @@ while True:
                         level_high = max(highs)
                         level_low = min(lows)
 
-                        print(
-                            f"\nNEW 30M LEVELS -> "
+                        write_log(
+                            f"NEW 30M LEVELS -> "
                             f"HIGH={level_high} "
-                            f"LOW={level_low}",
-                            flush=True
+                            f"LOW={level_low}"
                         )
 
                     last_30m_time = current_30m_time
 
-            # =============================================
+            # =================================================
             # ENTRY CONDITIONS
-            # =============================================
+            # =================================================
 
-            if not trade_running and level_high and level_low:
+            if (
+                not trade_running and
+                level_high and
+                level_low and
+                today_trades < MAX_TRADES_PER_DAY
+            ):
 
-                # =========================================
+                # =================================================
                 # LONG ENTRY
-                # =========================================
+                # =================================================
 
                 if candle_close > level_high:
 
                     trade_running = True
                     trade_side = "LONG"
+
+                    selected_option = ce_symbol
+
+                    option_entry_price = round(
+                        live_price * 0.02,
+                        2
+                    )
 
                     entry_price = candle_close
 
@@ -250,21 +305,39 @@ while True:
 
                     trail_sl = sl_price
 
-                    print(
-                        f"\nLONG ENTRY = {entry_price} "
-                        f"| SL={sl_price} "
-                        f"| TARGET={target_price}",
-                        flush=True
+                    today_trades += 1
+
+                    write_log(
+                        f"LONG ENTRY = {entry_price}"
                     )
 
-                # =========================================
+                    write_log(
+                        f"SELECTED OPTION = {selected_option}"
+                    )
+
+                    write_log(
+                        f"OPTION ENTRY PRICE = {option_entry_price}"
+                    )
+
+                    write_log(
+                        f"SL={sl_price} | TARGET={target_price}"
+                    )
+
+                # =================================================
                 # SHORT ENTRY
-                # =========================================
+                # =================================================
 
                 elif candle_close < level_low:
 
                     trade_running = True
                     trade_side = "SHORT"
+
+                    selected_option = pe_symbol
+
+                    option_entry_price = round(
+                        live_price * 0.02,
+                        2
+                    )
 
                     entry_price = candle_close
 
@@ -273,16 +346,27 @@ while True:
 
                     trail_sl = sl_price
 
-                    print(
-                        f"\nSHORT ENTRY = {entry_price} "
-                        f"| SL={sl_price} "
-                        f"| TARGET={target_price}",
-                        flush=True
+                    today_trades += 1
+
+                    write_log(
+                        f"SHORT ENTRY = {entry_price}"
                     )
 
-            # =============================================
+                    write_log(
+                        f"SELECTED OPTION = {selected_option}"
+                    )
+
+                    write_log(
+                        f"OPTION ENTRY PRICE = {option_entry_price}"
+                    )
+
+                    write_log(
+                        f"SL={sl_price} | TARGET={target_price}"
+                    )
+
+            # =================================================
             # START NEW 5M CANDLE
-            # =============================================
+            # =================================================
 
             candle_open = live_price
             candle_high = live_price
@@ -297,15 +381,16 @@ while True:
 
         if trade_running:
 
-            # =============================================
+            # =================================================
             # LONG TRADE
-            # =============================================
+            # =================================================
 
             if trade_side == "LONG":
 
                 profit = live_price - entry_price
 
                 # START TRAILING
+
                 if profit >= TRAIL_START:
 
                     new_trail = live_price - TRAIL_GAP
@@ -314,40 +399,88 @@ while True:
 
                         trail_sl = new_trail
 
-                        print(
-                            f"\nLONG TRAIL SL = {trail_sl}",
-                            flush=True
+                        write_log(
+                            f"LONG TRAIL SL = {trail_sl}"
                         )
 
                 # EXIT TRAIL
+
                 if live_price <= trail_sl:
 
-                    print(
-                        f"\nLONG EXIT = {live_price}",
-                        flush=True
+                    option_exit_price = round(
+                        live_price * 0.02,
+                        2
+                    )
+
+                    trade_pnl = (
+                        option_exit_price -
+                        option_entry_price
+                    ) * LOT_SIZE
+
+                    DAY_PNL += trade_pnl
+
+                    write_log(
+                        f"LONG EXIT = {live_price}"
+                    )
+
+                    write_log(
+                        f"OPTION EXIT PRICE = {option_exit_price}"
+                    )
+
+                    write_log(
+                        f"TRADE PNL = {trade_pnl}"
+                    )
+
+                    write_log(
+                        f"DAY PNL = {DAY_PNL}"
                     )
 
                     trade_running = False
 
                 # TARGET HIT
+
                 elif live_price >= target_price:
 
-                    print(
-                        f"\nLONG TARGET HIT = {live_price}",
-                        flush=True
+                    option_exit_price = round(
+                        live_price * 0.02,
+                        2
+                    )
+
+                    trade_pnl = (
+                        option_exit_price -
+                        option_entry_price
+                    ) * LOT_SIZE
+
+                    DAY_PNL += trade_pnl
+
+                    write_log(
+                        f"LONG TARGET HIT = {live_price}"
+                    )
+
+                    write_log(
+                        f"OPTION EXIT PRICE = {option_exit_price}"
+                    )
+
+                    write_log(
+                        f"TRADE PNL = {trade_pnl}"
+                    )
+
+                    write_log(
+                        f"DAY PNL = {DAY_PNL}"
                     )
 
                     trade_running = False
 
-            # =============================================
+            # =================================================
             # SHORT TRADE
-            # =============================================
+            # =================================================
 
             elif trade_side == "SHORT":
 
                 profit = entry_price - live_price
 
                 # START TRAILING
+
                 if profit >= TRAIL_START:
 
                     new_trail = live_price + TRAIL_GAP
@@ -356,27 +489,74 @@ while True:
 
                         trail_sl = new_trail
 
-                        print(
-                            f"\nSHORT TRAIL SL = {trail_sl}",
-                            flush=True
+                        write_log(
+                            f"SHORT TRAIL SL = {trail_sl}"
                         )
 
                 # EXIT TRAIL
+
                 if live_price >= trail_sl:
 
-                    print(
-                        f"\nSHORT EXIT = {live_price}",
-                        flush=True
+                    option_exit_price = round(
+                        live_price * 0.02,
+                        2
+                    )
+
+                    trade_pnl = (
+                        option_exit_price -
+                        option_entry_price
+                    ) * LOT_SIZE
+
+                    DAY_PNL += trade_pnl
+
+                    write_log(
+                        f"SHORT EXIT = {live_price}"
+                    )
+
+                    write_log(
+                        f"OPTION EXIT PRICE = {option_exit_price}"
+                    )
+
+                    write_log(
+                        f"TRADE PNL = {trade_pnl}"
+                    )
+
+                    write_log(
+                        f"DAY PNL = {DAY_PNL}"
                     )
 
                     trade_running = False
 
                 # TARGET HIT
+
                 elif live_price <= target_price:
 
-                    print(
-                        f"\nSHORT TARGET HIT = {live_price}",
-                        flush=True
+                    option_exit_price = round(
+                        live_price * 0.02,
+                        2
+                    )
+
+                    trade_pnl = (
+                        option_exit_price -
+                        option_entry_price
+                    ) * LOT_SIZE
+
+                    DAY_PNL += trade_pnl
+
+                    write_log(
+                        f"SHORT TARGET HIT = {live_price}"
+                    )
+
+                    write_log(
+                        f"OPTION EXIT PRICE = {option_exit_price}"
+                    )
+
+                    write_log(
+                        f"TRADE PNL = {trade_pnl}"
+                    )
+
+                    write_log(
+                        f"DAY PNL = {DAY_PNL}"
                     )
 
                     trade_running = False
@@ -385,6 +565,6 @@ while True:
 
     except Exception as e:
 
-        print(f"\nERROR = {e}", flush=True)
+        write_log(f"ERROR = {e}")
 
         time.sleep(5)
