@@ -219,6 +219,9 @@ day_pnl = 0
 last_print_price = None
 last_option_fetch_price = None
 
+atm_ce_ltp = 0
+atm_pe_ltp = 0
+
 # =========================================================
 # START
 # =========================================================
