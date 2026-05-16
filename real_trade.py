@@ -29,11 +29,11 @@ REAL_QTY = (
     NUM_LOTS
 )
 
-OPTION_SL = 10
-OPTION_TARGET = 20
+OPTION_SL = 40
+OPTION_TARGET = 800
 
-TRAIL_START = 10
-TRAIL_GAP = 5
+TRAIL_START = 100
+TRAIL_GAP = 50
 
 EXPIRY = "2026-05-26"
 
@@ -830,7 +830,7 @@ while True:
             trade_running = False
             trade_side = None
 
-            time.sleep(5)
+            time.sleep(1)
 
     except Exception as e:
 
