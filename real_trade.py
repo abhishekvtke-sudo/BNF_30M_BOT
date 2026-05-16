@@ -309,12 +309,12 @@ while True:
         atm_pe_ltp = option_data["pe_ltp"]
 
         write_log(
-            
-            f"ATM STRIKE = {atm_strike}"
+
+            f"ATM STRIKE = {atm_strike} | "
         
-            f"ATM CE PREMIUM = {atm_ce_ltp}"
+            f"ATM CE PREMIUM = {atm_ce_ltp} | "
        
-            f"ATM PE PREMIUM = {atm_pe_ltp}"
+            f"ATM PE PREMIUM = {atm_pe_ltp} | "
         )
 
         # =================================================
