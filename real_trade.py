@@ -259,11 +259,14 @@ while True:
 
             write_log(
                f"MARKET CLOSED | "
+               f"LIVE BANKNIFTY = {last_print_price} | "
+               f"ATM CE = {atm_ce_ltp} | "
+               f"ATM PE = {atm_pe_ltp} | "
                f"WAITING FOR OPEN = "
                f"{hours}h {minutes}m {seconds}s"
             )
 
-            time.sleep(20)
+            time.sleep(15)
 
             continue
 
