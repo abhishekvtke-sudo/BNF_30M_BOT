@@ -128,16 +128,8 @@ while True:
 
         data = response.json()
 
-        feed_data = data["data"]
-
-        first_segment = list(feed_data.keys())[0]
-
-        segment_data = feed_data[first_segment]
-
-        security_id_key = list(segment_data.keys())[0]
-
         live_price = float(
-           segment_data[security_id_key]["LTP"]
+           data["data"]["NSE_INDICES"]["25"]["last_price"]
         )
         
         # =================================================
