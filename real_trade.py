@@ -134,8 +134,10 @@ while True:
 
         segment_data = feed_data[first_segment]
 
+        security_id_key = list(segment_data.keys())[0]
+
         live_price = float(
-           segment_data["last_price"]
+           segment_data[security_id_key]["LTP"]
         )
         
         # =================================================
