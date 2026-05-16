@@ -263,9 +263,9 @@ while True:
                f"{hours}h {minutes}m {seconds}s"
             )
 
-    time.sleep(20)
+            time.sleep(20)
 
-    continue
+            continue
 
         # =================================================
         # MARKET HOURS FILTER
