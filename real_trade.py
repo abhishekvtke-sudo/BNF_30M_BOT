@@ -516,10 +516,10 @@ while True:
                 trade_running = False
                 trade_side = None
 
-        time.sleep(1)
+        time.sleep(5)
 
     except Exception as e:
 
         write_log(f"ERROR = {e}")
 
-        time.sleep(2)
+        time.sleep(5)
