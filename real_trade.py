@@ -217,6 +217,7 @@ trail_sl = None
 day_pnl = 0
 
 last_print_price = None
+last_option_fetch_price = None
 
 # =========================================================
 # START
@@ -279,7 +280,7 @@ while True:
 
         if live_price is None:
 
-            time.sleep(5)
+            time.sleep(15)
             continue
 
         if live_price != last_print_price:
@@ -294,13 +295,17 @@ while True:
         # ATM OPTIONS
         # =================================================
 
-        option_data = get_atm_options(
-            live_price
-        )
+        option_data = None
+
+        if live_price != last_option_fetch_price:
+
+           option_data = get_atm_options(live_price)
+
+           last_option_fetch_price = live_price
 
         if option_data is None:
 
-            time.sleep(5)
+            time.sleep(15)
             continue
 
         atm_strike = option_data["atm"]
