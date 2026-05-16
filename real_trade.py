@@ -1,6 +1,6 @@
 import requests
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, time as dt_time
 from config import CLIENT_ID, ACCESS_TOKEN
 
 # =========================================================
@@ -237,6 +237,35 @@ while True:
     try:
 
         now = datetime.now()
+
+        market_start = dt_time(9, 15)
+        market_end = dt_time(15, 30)
+
+        if now.time() < market_start or now.time() > market_end:
+
+            next_open = datetime.combine(
+              now.date(),
+              market_start
+    )
+
+    if now.time() > market_end:
+        next_open += timedelta(days=1)
+
+    remaining = next_open - now
+
+    hours = remaining.seconds // 3600
+    minutes = (remaining.seconds % 3600) // 60
+    seconds = remaining.seconds % 60
+
+    write_log(
+        f"MARKET CLOSED | "
+        f"WAITING FOR OPEN = "
+        f"{hours}h {minutes}m {seconds}s"
+    )
+
+    time.sleep(1)
+
+    continue
 
         # =================================================
         # MARKET HOURS FILTER
