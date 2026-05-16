@@ -84,6 +84,14 @@ def get_banknifty_ltp():
 
     data = response.json()
 
+    if "data" not in data:
+        write_log(f"BAD RESPONSE = {data}")
+        return None
+
+    if "IDX_I" not in data["data"]:
+        write_log(f"BAD RESPONSE = {data}")
+        return None
+
     live_price = float(
         data["data"]["IDX_I"]["25"]["last_price"]
     )
@@ -171,11 +179,11 @@ def get_atm_options(option_chain_data, live_price):
 
     pe_data = atm_data["pe"]
 
-    ce_security_id = ce_data["securityId"]
-    pe_security_id = pe_data["securityId"]
+    ce_security_id = ce_data["security_id"]
+    pe_security_id = pe_data["security_id"]
 
-    ce_ltp = float(ce_data["last_price"])
-    pe_ltp = float(pe_data["last_price"])
+    ce_ltp = float(ce_data.get("last_price", 0))
+    pe_ltp = float(pe_data.get("last_price", 0))
 
     return {
 
@@ -264,6 +272,10 @@ while True:
         # =================================================
 
         live_price = get_banknifty_ltp()
+
+        if live_price is None:
+            time.sleep(5)
+            continue
 
         # =================================================
         # OPTION CHAIN REFRESH
