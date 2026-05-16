@@ -2,17 +2,17 @@ import requests
 import time
 from datetime import datetime, timedelta, time as dt_time
 
-from dhanhq import dhanhq
 from config import CLIENT_ID, ACCESS_TOKEN
 
 # =========================================================
 # DHAN CLIENT
 # =========================================================
 
-dhan = dhanhq(
-    CLIENT_ID,
-    ACCESS_TOKEN
-)
+headers = {
+    "access-token": ACCESS_TOKEN,
+    "client-id": CLIENT_ID,
+    "Content-Type": "application/json"
+}
 
 # =========================================================
 # CONFIG
@@ -613,6 +613,24 @@ while True:
                 write_log("====================")
                 write_log("BUY CE")
                 write_log("====================")
+                order_payload = {
+                    "transactionType": "BUY",
+                    "exchangeSegment": "NSE_FNO",
+                    "productType": "INTRADAY",
+                    "orderType": "MARKET",
+                    "validity": "DAY",
+                    "securityId": option_data["ce_security_id"],
+                    "quantity": REAL_QTY,
+                    "price": 0
+                }
+
+                response = requests.post(
+                    "https://api.dhan.co/orders",
+                    headers=headers,
+                    json=order_payload
+                )
+
+                write_log(f"BUY RESPONSE = {response.json()}")
 
                 write_log(
                     f"ENTRY PREMIUM = "
@@ -657,6 +675,16 @@ while True:
                 write_log("====================")
                 write_log("BUY PE")
                 write_log("====================")
+                order_payload = {
+                    "transactionType": "BUY",
+                    "exchangeSegment": "NSE_FNO",
+                    "productType": "INTRADAY",
+                    "orderType": "MARKET",
+                    "validity": "DAY",
+                    "securityId": option_data["pe_security_id"],
+                    "quantity": REAL_QTY,
+                    "price": 0
+                }
 
                 write_log(
                     f"ENTRY PREMIUM = "
@@ -775,6 +803,29 @@ while True:
                     f"DAY PNL = "
                     f"{day_pnl}"
                 )
+
+                if trade_side == "CE":
+                    exit_security_id = option_data["ce_security_id"]
+                else:
+                    exit_security_id = option_data["pe_security_id"]    
+                order_payload = {
+                    "transactionType": "SELL",
+                    "exchangeSegment": "NSE_FNO",
+                    "productType": "INTRADAY",
+                    "orderType": "MARKET",
+                    "validity": "DAY",
+                    "securityId": exit_security_id
+                    "quantity": REAL_QTY,
+                    "price": 0
+                }
+
+                response = requests.post(
+                "https://api.dhan.co/orders",
+                headers=headers,
+                json=order_payload
+                )
+
+            write_log(f"SELL RESPONSE = {response.json()}")
 
                 trade_running = False
                 trade_side = None
