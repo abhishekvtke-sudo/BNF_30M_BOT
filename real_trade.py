@@ -147,7 +147,7 @@ while True:
         # SAFE DHAN RESPONSE PARSING
         # =================================================
 
-        feed_data = data.get("data", {})
+        feed_data = data["data"]
 
         if len(feed_data) == 0:
 
@@ -161,11 +161,11 @@ while True:
 
         segment_data = feed_data[first_segment]
 
-        security_data = segment_data.get(str(SECURITY_ID))
+        security_data = segment_data(str(SECURITY_ID))
 
         if security_data is None:
 
-            security_data = segment_data.get(int(SECURITY_ID))
+            security_data = segment_data(int(SECURITY_ID))
 
         if security_data is None:
 
