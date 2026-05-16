@@ -7,12 +7,8 @@ from config import CLIENT_ID, ACCESS_TOKEN
 # CONFIG
 # =========================================================
 
-INDEX_SECURITY_ID = "25"      # BANKNIFTY
+INDEX_SECURITY_ID = 25
 INDEX_SEGMENT = "IDX_I"
-
-# =========================================================
-# OPTION CONFIG
-# =========================================================
 
 LOT_SIZE = 30
 
@@ -22,34 +18,37 @@ OPTION_TARGET = 20
 TRAIL_START = 10
 TRAIL_GAP = 5
 
-EXPIRY = "26 MAY"
+OPTION_CHAIN_REFRESH = 60
 
 # =========================================================
-# MANUAL OPTION SECURITY IDS
-# UPDATE DAILY
+# API URLS
 # =========================================================
 
-CE_SECURITY_ID = "123456"
-PE_SECURITY_ID = "654321"
+BASE_URL = "https://api.dhan.co/v2"
+
+LTP_URL = f"{BASE_URL}/marketfeed/ltp"
+
+OPTION_CHAIN_URL = f"{BASE_URL}/optionchain"
+
+EXPIRY_LIST_URL = f"{BASE_URL}/optionchain/expirylist"
 
 # =========================================================
-# API
+# HEADERS
 # =========================================================
-
-url = "https://api.dhan.co/v2/marketfeed/ltp"
 
 headers = {
     "access-token": ACCESS_TOKEN,
     "client-id": CLIENT_ID,
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "Accept": "application/json"
 }
 
 # =========================================================
-# INDEX PAYLOAD
+# PAYLOAD
 # =========================================================
 
 index_payload = {
-    INDEX_SEGMENT: [int(INDEX_SECURITY_ID)]
+    INDEX_SEGMENT: [INDEX_SECURITY_ID]
 }
 
 # =========================================================
@@ -66,34 +65,129 @@ def write_log(message):
         f"{current_time} -> {message}"
     )
 
-    print(final_message)
+    print(final_message, flush=True)
 
     with open("trade_logs.txt", "a") as file:
         file.write(final_message + "\n")
 
 # =========================================================
-# OPTION LTP FUNCTION
+# FETCH BANKNIFTY PRICE
 # =========================================================
 
-def get_option_ltp(security_id):
-
-    option_payload = {
-        "NSE_FNO": [int(security_id)]
-    }
+def get_banknifty_ltp():
 
     response = requests.post(
-        url,
-        json=option_payload,
+        LTP_URL,
+        json=index_payload,
         headers=headers
     )
 
     data = response.json()
 
-    option_price = float(
-        data["data"]["NSE_FNO"][str(security_id)]["last_price"]
+    live_price = float(
+        data["data"]["IDX_I"]["25"]["last_price"]
     )
 
-    return option_price
+    return live_price
+
+# =========================================================
+# FETCH EXPIRY LIST
+# =========================================================
+
+def get_expiry_list():
+
+    payload = {
+        "UnderlyingScrip": INDEX_SECURITY_ID,
+        "UnderlyingSeg": INDEX_SEGMENT
+    }
+
+    response = requests.post(
+        EXPIRY_LIST_URL,
+        json=payload,
+        headers=headers
+    )
+
+    data = response.json()
+
+    return data["data"]
+
+# =========================================================
+# FETCH OPTION CHAIN
+# =========================================================
+
+def get_option_chain(expiry):
+
+    payload = {
+        "UnderlyingScrip": INDEX_SECURITY_ID,
+        "UnderlyingSeg": INDEX_SEGMENT,
+        "Expiry": expiry
+    }
+
+    response = requests.post(
+        OPTION_CHAIN_URL,
+        json=payload,
+        headers=headers
+    )
+
+    data = response.json()
+
+    return data["data"]
+
+# =========================================================
+# ATM CE PE FETCH
+# =========================================================
+
+def get_atm_options(option_chain_data, live_price):
+
+    atm_strike = round(
+        live_price / 100
+    ) * 100
+
+    oc = option_chain_data["oc"]
+
+    strike_key = f"{atm_strike:.6f}"
+
+    atm_data = oc.get(strike_key)
+
+    if atm_data is None:
+
+        available_strikes = [
+            float(x)
+            for x in oc.keys()
+        ]
+
+        nearest = min(
+            available_strikes,
+            key=lambda x: abs(x - atm_strike)
+        )
+
+        strike_key = f"{nearest:.6f}"
+
+        atm_data = oc[strike_key]
+
+        atm_strike = nearest
+
+    ce_data = atm_data["ce"]
+
+    pe_data = atm_data["pe"]
+
+    ce_security_id = ce_data["securityId"]
+    pe_security_id = pe_data["securityId"]
+
+    ce_ltp = float(ce_data["last_price"])
+    pe_ltp = float(pe_data["last_price"])
+
+    return {
+
+        "strike": atm_strike,
+
+        "ce_security_id": ce_security_id,
+        "pe_security_id": pe_security_id,
+
+        "ce_ltp": ce_ltp,
+        "pe_ltp": pe_ltp
+
+    }
 
 # =========================================================
 # VARIABLES
@@ -115,21 +209,27 @@ last_30m_time = None
 trade_running = False
 trade_side = None
 
-spot_entry = None
+entry_price = None
+exit_price = None
 
-option_symbol = None
-option_security_id = None
-
-option_entry_price = None
-option_exit_price = None
-
-option_sl_price = None
-option_target_price = None
+target_price = None
+sl_price = None
 trail_sl = None
 
 day_pnl = 0
 
 last_print_price = None
+
+option_chain_data = None
+last_option_refresh = 0
+
+atm_ce_security_id = None
+atm_pe_security_id = None
+
+atm_ce_ltp = None
+atm_pe_ltp = None
+
+atm_strike = None
 
 # =========================================================
 # START
@@ -138,6 +238,16 @@ last_print_price = None
 write_log("======================================")
 write_log("REAL OPTION PREMIUM BOT STARTED")
 write_log("======================================")
+
+# =========================================================
+# FETCH INITIAL EXPIRY
+# =========================================================
+
+expiry_list = get_expiry_list()
+
+current_expiry = expiry_list[0]
+
+write_log(f"ACTIVE EXPIRY = {current_expiry}")
 
 # =========================================================
 # MAIN LOOP
@@ -150,23 +260,74 @@ while True:
         now = datetime.now()
 
         # =================================================
-        # FETCH BANKNIFTY SPOT
+        # FETCH BANKNIFTY
         # =================================================
 
-        response = requests.post(
-            url,
-            json=index_payload,
-            headers=headers
-        )
-
-        data = response.json()
-
-        live_price = float(
-            data["data"]["IDX_I"]["25"]["last_price"]
-        )
+        live_price = get_banknifty_ltp()
 
         # =================================================
-        # PRINT ONLY ON CHANGE
+        # OPTION CHAIN REFRESH
+        # =================================================
+
+        current_time = time.time()
+
+        if (
+            current_time - last_option_refresh
+            >= OPTION_CHAIN_REFRESH
+        ):
+
+            option_chain_data = get_option_chain(
+                current_expiry
+            )
+
+            atm_data = get_atm_options(
+                option_chain_data,
+                live_price
+            )
+
+            atm_strike = atm_data["strike"]
+
+            atm_ce_security_id = atm_data[
+                "ce_security_id"
+            ]
+
+            atm_pe_security_id = atm_data[
+                "pe_security_id"
+            ]
+
+            atm_ce_ltp = atm_data["ce_ltp"]
+
+            atm_pe_ltp = atm_data["pe_ltp"]
+
+            write_log("")
+            write_log(
+                f"ATM STRIKE = {atm_strike}"
+            )
+
+            write_log(
+                f"ATM CE ID = "
+                f"{atm_ce_security_id}"
+            )
+
+            write_log(
+                f"ATM PE ID = "
+                f"{atm_pe_security_id}"
+            )
+
+            write_log(
+                f"ATM CE PREMIUM = "
+                f"{atm_ce_ltp}"
+            )
+
+            write_log(
+                f"ATM PE PREMIUM = "
+                f"{atm_pe_ltp}"
+            )
+
+            last_option_refresh = current_time
+
+        # =================================================
+        # PRINT LIVE PRICE
         # =================================================
 
         if live_price != last_print_price:
@@ -295,38 +456,20 @@ while True:
 
             if live_price > level_high:
 
-                strike = round(
-                    live_price / 100
-                ) * 100
-
-                option_symbol = (
-                    f"BANKNIFTY "
-                    f"{EXPIRY} "
-                    f"{strike} CE"
-                )
-
-                option_security_id = CE_SECURITY_ID
-
-                option_entry_price = get_option_ltp(
-                    option_security_id
-                )
-
-                option_sl_price = (
-                    option_entry_price -
-                    OPTION_SL
-                )
-
-                option_target_price = (
-                    option_entry_price +
-                    OPTION_TARGET
-                )
-
-                trail_sl = option_sl_price
-
-                spot_entry = live_price
-
                 trade_running = True
                 trade_side = "CE"
+
+                entry_price = atm_ce_ltp
+
+                sl_price = (
+                    entry_price - OPTION_SL
+                )
+
+                target_price = (
+                    entry_price + OPTION_TARGET
+                )
+
+                trail_sl = sl_price
 
                 write_log("")
                 write_log("================================")
@@ -334,26 +477,20 @@ while True:
                 write_log("================================")
 
                 write_log(
-                    f"OPTION = {option_symbol}"
+                    f"ATM STRIKE = {atm_strike}"
                 )
 
                 write_log(
-                    f"SPOT ENTRY = {spot_entry}"
+                    f"ENTRY PREMIUM = "
+                    f"{entry_price}"
                 )
 
                 write_log(
-                    f"OPTION ENTRY = "
-                    f"{option_entry_price}"
+                    f"SL = {sl_price}"
                 )
 
                 write_log(
-                    f"OPTION SL = "
-                    f"{option_sl_price}"
-                )
-
-                write_log(
-                    f"OPTION TARGET = "
-                    f"{option_target_price}"
+                    f"TARGET = {target_price}"
                 )
 
             # =============================================
@@ -362,38 +499,20 @@ while True:
 
             elif live_price < level_low:
 
-                strike = round(
-                    live_price / 100
-                ) * 100
-
-                option_symbol = (
-                    f"BANKNIFTY "
-                    f"{EXPIRY} "
-                    f"{strike} PE"
-                )
-
-                option_security_id = PE_SECURITY_ID
-
-                option_entry_price = get_option_ltp(
-                    option_security_id
-                )
-
-                option_sl_price = (
-                    option_entry_price -
-                    OPTION_SL
-                )
-
-                option_target_price = (
-                    option_entry_price +
-                    OPTION_TARGET
-                )
-
-                trail_sl = option_sl_price
-
-                spot_entry = live_price
-
                 trade_running = True
                 trade_side = "PE"
+
+                entry_price = atm_pe_ltp
+
+                sl_price = (
+                    entry_price - OPTION_SL
+                )
+
+                target_price = (
+                    entry_price + OPTION_TARGET
+                )
+
+                trail_sl = sl_price
 
                 write_log("")
                 write_log("================================")
@@ -401,26 +520,20 @@ while True:
                 write_log("================================")
 
                 write_log(
-                    f"OPTION = {option_symbol}"
+                    f"ATM STRIKE = {atm_strike}"
                 )
 
                 write_log(
-                    f"SPOT ENTRY = {spot_entry}"
+                    f"ENTRY PREMIUM = "
+                    f"{entry_price}"
                 )
 
                 write_log(
-                    f"OPTION ENTRY = "
-                    f"{option_entry_price}"
+                    f"SL = {sl_price}"
                 )
 
                 write_log(
-                    f"OPTION SL = "
-                    f"{option_sl_price}"
-                )
-
-                write_log(
-                    f"OPTION TARGET = "
-                    f"{option_target_price}"
+                    f"TARGET = {target_price}"
                 )
 
         # =================================================
@@ -429,23 +542,25 @@ while True:
 
         if trade_running:
 
-            option_ltp = get_option_ltp(
-                option_security_id
+            current_option_price = (
+                atm_ce_ltp
+                if trade_side == "CE"
+                else atm_pe_ltp
+            )
+
+            move = (
+                current_option_price -
+                entry_price
             )
 
             # =============================================
             # TRAILING
             # =============================================
 
-            move = (
-                option_ltp -
-                option_entry_price
-            )
-
             if move >= TRAIL_START:
 
                 new_sl = (
-                    option_ltp -
+                    current_option_price -
                     TRAIL_GAP
                 )
 
@@ -454,7 +569,7 @@ while True:
                     trail_sl = new_sl
 
                     write_log(
-                        f"OPTION TRAIL SL = "
+                        f"TRAIL SL = "
                         f"{trail_sl}"
                     )
 
@@ -463,15 +578,15 @@ while True:
             # =============================================
 
             if (
-                option_ltp <= trail_sl or
-                option_ltp >= option_target_price
+                current_option_price <= trail_sl or
+                current_option_price >= target_price
             ):
 
-                option_exit_price = option_ltp
+                exit_price = current_option_price
 
                 pnl = (
-                    option_exit_price -
-                    option_entry_price
+                    exit_price -
+                    entry_price
                 ) * LOT_SIZE
 
                 day_pnl += pnl
@@ -482,8 +597,8 @@ while True:
                 write_log("================================")
 
                 write_log(
-                    f"OPTION EXIT = "
-                    f"{option_exit_price}"
+                    f"EXIT PREMIUM = "
+                    f"{exit_price}"
                 )
 
                 write_log(
@@ -494,23 +609,6 @@ while True:
                 write_log(
                     f"DAY PNL = "
                     f"{day_pnl}"
-                )
-
-                trade_running = False
-                trade_side = None
-                option_symbol = None
-
-        # =================================================
-        # FORCE EXIT
-        # =================================================
-
-        if now.hour == 15 and now.minute >= 15:
-
-            if trade_running:
-
-                write_log("")
-                write_log(
-                    "FORCE EXIT 3:15 PM"
                 )
 
                 trade_running = False
