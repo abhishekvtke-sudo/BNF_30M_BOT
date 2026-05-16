@@ -134,8 +134,6 @@ while True:
 
         segment_data = feed_data[first_segment]
 
-        security_data = list(segment_data.values())[0]
-
         live_price = float(
            security_data["last_price"]
         )
