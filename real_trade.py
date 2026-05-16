@@ -135,7 +135,7 @@ while True:
         segment_data = feed_data[first_segment]
 
         live_price = float(
-           security_data["last_price"]
+           segment_data["last_price"]
         )
         
         # =================================================
