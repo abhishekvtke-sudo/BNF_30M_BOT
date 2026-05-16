@@ -246,22 +246,22 @@ while True:
             next_open = datetime.combine(
               now.date(),
               market_start
-    )
+           )
 
-          if now.time() > market_end:
-             next_open += timedelta(days=1)
+            if now.time() > market_end:
+              next_open += timedelta(days=1)
 
-          remaining = next_open - now
+            remaining = next_open - now
 
-          hours = remaining.seconds // 3600
-          minutes = (remaining.seconds % 3600) // 60
-          seconds = remaining.seconds % 60
+            hours = remaining.seconds // 3600
+            minutes = (remaining.seconds % 3600) // 60
+            seconds = remaining.seconds % 60
 
-          write_log(
-              f"MARKET CLOSED | "
-              f"WAITING FOR OPEN = "
-              f"{hours}h {minutes}m {seconds}s"
-    )
+            write_log(
+               f"MARKET CLOSED | "
+               f"WAITING FOR OPEN = "
+               f"{hours}h {minutes}m {seconds}s"
+            )
 
     time.sleep(20)
 
