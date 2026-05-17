@@ -406,11 +406,15 @@ while True:
         
         print("PASSED MARKET FILTER", flush=True)
 
+        print("BEFORE LIVE PRICE", flush=True)
+
         # =================================================
         # LIVE BANKNIFTY
         # =================================================
 
         live_price = get_banknifty_ltp()
+
+        print(f"LIVE BANKNIFTY = {live_price}", flush=True)
 
         if live_price is None:
 
