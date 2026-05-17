@@ -124,6 +124,8 @@ def get_banknifty_ltp():
 
         data = response.json()
 
+        print(f"LTP RESPONSE = {data}", flush=True)
+
         if "data" not in data:
             return None
 
