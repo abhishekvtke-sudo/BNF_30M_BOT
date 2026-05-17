@@ -1,3 +1,4 @@
+exit()
 import requests
 import time
 from datetime import datetime
@@ -65,7 +66,7 @@ print("30M BREAKOUT BOT STARTED", flush=True)
 # MAIN LOOP
 # =====================================================
 
-while True:
+#while True:
 
     try:
 
