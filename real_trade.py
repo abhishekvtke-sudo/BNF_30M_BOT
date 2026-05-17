@@ -367,7 +367,7 @@ while True:
             now.time() > market_end
         ):
 
-            next_open = datetime.combine(
+            next_open = IST.localize(
                 datetime.combine(
                     now.date(),
                     market_start
