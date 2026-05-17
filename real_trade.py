@@ -830,12 +830,13 @@ while True:
                     "price": 0
                 }
 
+
             write_log(f"SELL RESPONSE = {response.json()}")
 
             trade_running = False
             trade_side = None
 
-            time.sleep(20)
+            time.sleep(3)
 
     except Exception as e:
 
