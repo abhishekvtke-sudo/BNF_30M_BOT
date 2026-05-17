@@ -229,67 +229,6 @@ def get_atm_options(live_price):
 
         return None
 
-# =========================================================
-# PLACE REAL ORDER
-# =========================================================
-
-def place_order(
-
-    security_id,
-    side,
-    quantity
-
-):
-
-    try:
-
-        response = dhan.place_order(
-
-            security_id=str(security_id),
-
-            exchange_segment=dhan.NSE_FNO,
-
-            transaction_type=(
-                dhan.BUY
-                if side == "BUY"
-                else dhan.SELL
-            ),
-
-            quantity=quantity,
-
-            order_type=dhan.MARKET,
-
-            product_type=dhan.INTRADAY,
-
-            price=0,
-
-            validity="DAY",
-
-            disclosed_quantity=0,
-
-            after_market_order=False,
-
-            trigger_price=0,
-
-            correlation_id=(
-                f"BNF_{side}_{datetime.now(IST).strftime('%H%M%S')}"
-            )
-
-        )
-
-        write_log(
-            f"{side} ORDER RESPONSE = {response}"
-        )
-
-        return response
-
-    except Exception as e:
-
-        write_log(
-            f"{side} ORDER ERROR = {e}"
-        )
-
-        return None
 
 # =========================================================
 # VARIABLES
@@ -321,8 +260,12 @@ day_pnl = 0
 
 last_option_fetch_price = None
 
+option_data = None
+
 atm_ce_ltp = 0
 atm_pe_ltp = 0
+
+
 
 # =========================================================
 # START
@@ -433,20 +376,18 @@ while True:
             live_price
         )
 
-        option_data = None
-
         if (
-            rounded_price !=
-            last_option_fetch_price
+            last_option_fetch_price is None or
+            abs(
+                rounded_price -
+                last_option_fetch_price
+            ) >= 100
         ):
+            new_data = get_atm_options(live_price)
 
-            option_data = get_atm_options(
-                live_price
-            )
-
-            last_option_fetch_price = (
-                rounded_price
-            )
+            if new_data is not None:
+                option_data = new_data
+                last_option_fetch_price = rounded_price
 
         if option_data is not None:
 
@@ -618,13 +559,7 @@ while True:
                     "ce_security_id"
                 ]
 
-                place_order(
-
-                    entry_security_id,
-                    "BUY",
-                    REAL_QTY
-
-                )
+               
 
                 write_log("")
                 write_log("====================")
@@ -680,14 +615,7 @@ while True:
                     "pe_security_id"
                 ]
 
-                place_order(
-
-                    entry_security_id,
-                    "BUY",
-                    REAL_QTY
-
-                )
-
+                
                 write_log("")
                 write_log("====================")
                 write_log("BUY PE")
@@ -776,13 +704,6 @@ while True:
 
             ):
 
-                place_order(
-
-                    entry_security_id,
-                    "SELL",
-                    REAL_QTY
-
-                )
 
                 exit_price = current_option_price
 
