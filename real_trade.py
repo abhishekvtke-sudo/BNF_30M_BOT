@@ -339,6 +339,8 @@ while True:
 
     try:
 
+        print("LOOP ITERATION STARTED", flush=True)
+
         now = datetime.now(IST)
 
         market_start = dt_time(
