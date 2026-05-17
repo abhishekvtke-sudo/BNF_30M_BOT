@@ -847,7 +847,7 @@ while True:
             trade_running = False
             trade_side = None
 
-            time.sleep(10)
+            time.sleep(20)
 
     except Exception as e:
 
