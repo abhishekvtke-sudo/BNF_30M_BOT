@@ -76,7 +76,7 @@ while True:
         # =================================================
 
         if now.hour < 9 or (now.hour == 9 and now.minute < 15):
-            time.sleep(1)
+            time.sleep(3)
             continue
 
         if now.hour > 15 or (now.hour == 15 and now.minute > 15):
@@ -381,7 +381,7 @@ while True:
 
                     trade_running = False
 
-        time.sleep(1)
+        time.sleep(3)
 
     except Exception as e:
 
