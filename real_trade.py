@@ -855,4 +855,4 @@ while True:
             f"MAIN LOOP ERROR = {e}"
         )
 
-        time.sleep(15)
+        time.sleep(5)
