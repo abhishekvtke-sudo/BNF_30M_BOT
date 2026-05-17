@@ -290,13 +290,13 @@ while True:
 
 
         market_start = dt_time(
-            0,
-            0
+            9,
+            15
         )
 
         market_end = dt_time(
-            23,
-            30
+            3,
+            15
         )
 
         # =================================================
@@ -341,11 +341,12 @@ while True:
                 f"ATM CE = {atm_ce_ltp} | "
                 f"ATM PE = {atm_pe_ltp} | "
                 f"WAITING FOR OPEN = "
-                f"{hours}h {minutes}m"
+                f"{hours}h {minutes}m {seconds}s"
 
             )
-
-            time.sleep(20)
+            current_second = datetime.now(IST).second
+            sleep_time = 20 - (current_second % 20)
+            time.sleep(sleep_time)
 
             continue
         
