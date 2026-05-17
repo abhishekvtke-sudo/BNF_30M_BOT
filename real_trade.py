@@ -641,6 +641,12 @@ while True:
                     "price": 0
                 }
 
+                response = requests.post(
+                    "https://api.dhan.co/orders",
+                    headers=headers,
+                    json=order_payload
+                )
+
                 write_log(f"BUY RESPONSE = {response.json()}")
 
                 write_log(
@@ -829,6 +835,11 @@ while True:
                     "quantity": REAL_QTY,
                     "price": 0
                 }
+                response = requests.post(
+                    "https://api.dhan.co/orders",
+                    headers=headers,
+                    json=order_payload
+                )
 
 
             write_log(f"SELL RESPONSE = {response.json()}")
@@ -836,7 +847,7 @@ while True:
             trade_running = False
             trade_side = None
 
-            time.sleep(5)
+        time.sleep(5)
 
     except Exception as e:
 
