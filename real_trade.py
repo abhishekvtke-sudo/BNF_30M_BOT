@@ -341,6 +341,8 @@ while True:
 
         print("LOOP ITERATION STARTED", flush=True)
 
+        print(now, flush=True)
+
         now = datetime.now(IST)
 
         market_start = dt_time(
@@ -400,6 +402,8 @@ while True:
             time.sleep(20)
 
             continue
+        
+        print("PASSED MARKET FILTER", flush=True)
 
         # =================================================
         # LIVE BANKNIFTY
