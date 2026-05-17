@@ -176,20 +176,27 @@ def get_atm_options(live_price):
             live_price / 100
         ) * 100
 
-        strike_key = None
+        ce_strike = atm_strike
+        pe_strike = atm_strike+100
+
+        ce_strike_key = None
+        pe_strike_key = None
 
         for strike in oc.keys():
 
-            if int(float(strike)) == atm_strike:
+            strike_int = int(float(strike))
 
-                strike_key = strike
-                break
+            if strike_int == ce_strike:
+                ce_strike_key = strike
 
-        if strike_key is None:
+            if strike_int == pe_strike:
+                pe_strike_key = strike
+
+        if ce_strike_key is None or pe_strike_key is None:
             return None
 
-        ce_data = oc[strike_key]["ce"]
-        pe_data = oc[strike_key]["pe"]
+        ce_data = oc[ce_strike_key]["ce"]
+        pe_data = oc[pe_strike_key]["pe"]
 
         return {
 
@@ -290,8 +297,8 @@ while True:
 
 
         market_start = dt_time(
-            9,
-            15
+            0,
+            28
         )
 
         market_end = dt_time(
