@@ -124,8 +124,6 @@ def get_banknifty_ltp():
 
         data = response.json()
 
-        time.sleep(1)
-
         print(f"LTP RESPONSE = {data}", flush=True)
 
         if "data" not in data:
@@ -838,7 +836,7 @@ while True:
             trade_running = False
             trade_side = None
 
-            time.sleep(3)
+            time.sleep(5)
 
     except Exception as e:
 
