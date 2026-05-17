@@ -270,7 +270,7 @@ def place_order(
             trigger_price=0,
 
             correlation_id=(
-                f"BNF_{side}_{datetime.now().strftime('%H%M%S')}"
+                f"BNF_{side}_{datetime.now(IST).strftime('%H%M%S')}"
             )
 
         )
@@ -339,7 +339,7 @@ while True:
 
     try:
 
-        now = datetime.now()
+        now = datetime.now(IST)
 
         market_start = dt_time(
             9,
