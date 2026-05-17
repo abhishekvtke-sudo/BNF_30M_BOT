@@ -354,7 +354,7 @@ while True:
         )
 
         market_end = dt_time(
-            20,
+            23,
             30
         )
 
