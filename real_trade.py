@@ -400,7 +400,7 @@ while True:
                 f"ATM CE = {atm_ce_ltp} | "
                 f"ATM PE = {atm_pe_ltp} | "
                 f"WAITING FOR OPEN = "
-                f"{hours}h {minutes}m {seconds}s"
+                f"{hours}h {minutes}m"
 
             )
 
@@ -422,7 +422,7 @@ while True:
 
         if live_price is None:
 
-            time.sleep(10)
+            time.sleep(15)
             continue
 
         # =================================================
