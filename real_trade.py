@@ -368,8 +368,10 @@ while True:
         ):
 
             next_open = datetime.combine(
-                now.date(),
-                market_start
+                datetime.combine(
+                    now.date(),
+                    market_start
+                )
             )
 
             if now.time() > market_end:
