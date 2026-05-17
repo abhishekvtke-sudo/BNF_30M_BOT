@@ -420,7 +420,7 @@ while True:
 
         if live_price is None:
 
-            time.sleep(5)
+            time.sleep(3)
             continue
 
         # =================================================
@@ -845,7 +845,7 @@ while True:
             trade_running = False
             trade_side = None
 
-            time.sleep(1)
+            time.sleep(3)
 
     except Exception as e:
 
