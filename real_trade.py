@@ -290,8 +290,8 @@ while True:
 
 
         market_start = dt_time(
-            23,
-            54
+            0,
+            0
         )
 
         market_end = dt_time(
