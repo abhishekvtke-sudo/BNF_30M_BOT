@@ -1,9 +1,11 @@
 import requests
 import time
+import pytz
 from datetime import datetime, timedelta, time as dt_time
 
 from config import CLIENT_ID, ACCESS_TOKEN
 
+IST = pytz.timezone("Asia/Kolkata")
 # =========================================================
 # DHAN CLIENT
 # =========================================================
@@ -85,7 +87,7 @@ option_payload = {
 
 def write_log(message):
 
-    current_time = datetime.now().strftime(
+    current_time = datetime.now(IST).strftime(
         "%Y-%m-%d %H:%M:%S"
     )
 
