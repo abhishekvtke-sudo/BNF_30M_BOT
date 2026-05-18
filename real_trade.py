@@ -289,8 +289,6 @@ while True:
 
     try:
 
-        print("LOOP ITERATION STARTED", flush=True)
-
         now = datetime.now(IST)
 
         print(now, flush=True)
@@ -357,10 +355,6 @@ while True:
 
             continue
         
-        print("PASSED MARKET FILTER", flush=True)
-
-        print("BEFORE LIVE PRICE", flush=True)
-
         # =================================================
         # LIVE BANKNIFTY
         # =================================================
@@ -371,7 +365,7 @@ while True:
 
         if live_price is None:
 
-            time.sleep(15)
+            time.sleep(2)
             continue
 
         # =================================================
@@ -410,6 +404,8 @@ while True:
                 f"PE = {atm_pe_ltp}"
 
             )
+
+            write_log("STEP 1 PASSED")
 
         # =================================================
         # BUILD 5M CANDLE
@@ -470,6 +466,10 @@ while True:
 
             candle_close = live_price
 
+            write_log("STEP 2 PASSED")
+
+
+
         # =================================================
         # CREATE 30M LEVELS
         # =================================================
@@ -526,6 +526,8 @@ while True:
 
                 last_30m_time = current_30m
 
+                write_log("STEP 3 PASSED")
+
         # =================================================
         # ENTRY
         # =================================================
@@ -565,7 +567,10 @@ while True:
                     "ce_security_id"
                 ]
 
-               
+                write_log("STEP 4 PASSED")
+
+                write_log(f"ENTRY SECURITY ID = {entry_security_id}")
+
 
                 write_log("")
                 write_log("====================")
@@ -588,13 +593,21 @@ while True:
                     json=order_payload
                 )
 
-                write_log(f"BUY RESPONSE = {response.json()}")
+                write_log("ORDER API CALLED")
+                try:
+                    data = response.json()
+                    write_log(f"BUY RESPONSE = {data}")
+                except Exception as e:
+                    write_log(f"JSON ERROR = {e}")
+                    write_log(f"RAW RESPONSE = {response.text}")
+                    time.sleep(5)
+                    continue
 
                 write_log(
                     f"ENTRY PREMIUM = "
                     f"{entry_price}"
                 )
-
+                write_log("STEP 5 PASSED")
             # =============================================
             # BUY PE
             # =============================================
@@ -621,7 +634,7 @@ while True:
                     "pe_security_id"
                 ]
 
-                
+
                 write_log("")
                 write_log("====================")
                 write_log("BUY PE")
@@ -769,12 +782,22 @@ while True:
                 )
 
 
-            write_log(f"SELL RESPONSE = {response.json()}")
+            write_log("SELL ORDER API CALLED")
+            try:
+                    data = response.json()
+                    write_log(f"SELL RESPONSE = {data}")
+                    write_log('SELL STEP PASSED')
+
+            except Exception as e:
+                    write_log(f"SELL JSON ERROR = {e}")
+                    write_log(f"SELL RAW RESPONSE = {response.text}")
+                    time.sleep(5)
+                    continue
 
             trade_running = False
             trade_side = None
 
-        time.sleep(1)
+        time.sleep(2)
 
     except Exception as e:
 
