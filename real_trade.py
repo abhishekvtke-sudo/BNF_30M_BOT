@@ -590,13 +590,31 @@ while True:
                 response = requests.post(
                     "https://api.dhan.co/orders",
                     headers=headers,
-                    json=order_payload
+                    json=order_payload,
+                    timeout=10
                 )
+                
 
                 write_log("ORDER API CALLED")
+
+                write_log(f"STATUS CODE = {response.status_code}")
+                write_log(f"RESPONSE TEXT = {response.text}")
+                
                 try:
                     data = response.json()
                     write_log(f"BUY RESPONSE = {data}")
+                    if response.status_code == 200:
+                        trade_running = True
+                        trade_side = "CE"
+                        entry_price = atm_ce_ltp
+                        target_price = entry_price + OPTION_TARGET
+                        trail_sl = entry_price - OPTION_SL
+                        write_log("BUY STEP PASSED")
+                    else:
+                
+                        write_log("BUY ORDER FAILED")
+                        continue
+
                 except Exception as e:
                     write_log(f"JSON ERROR = {e}")
                     write_log(f"RAW RESPONSE = {response.text}")
@@ -634,6 +652,10 @@ while True:
                     "pe_security_id"
                 ]
 
+                write_log("STEP 4 PASSED")
+
+                write_log(f"ENTRY SECURITY ID = {entry_security_id}")
+
 
                 write_log("")
                 write_log("====================")
@@ -650,37 +672,55 @@ while True:
                     "price": 0
                 }
 
+                response = requests.post(
+                    "https://api.dhan.co/orders",
+                    headers=headers,
+                    json=order_payload,
+                    timeout=10
+                )
+                
+
+                write_log("ORDER API CALLED")
+
+                write_log(f"STATUS CODE = {response.status_code}")
+                write_log(f"RESPONSE TEXT = {response.text}")
+                
+                try:
+                    data = response.json()
+                    write_log(f"BUY RESPONSE = {data}")
+                    if response.status_code == 200:
+                        trade_running = True
+                        trade_side = "PE"
+                        entry_price = atm_pe_ltp
+                        target_price = entry_price + OPTION_TARGET
+                        trail_sl = entry_price - OPTION_SL
+                        write_log("BUY STEP PASSED")
+                    else:
+                
+                        write_log("BUY ORDER FAILED")
+                        continue
+
+                except Exception as e:
+                    write_log(f"JSON ERROR = {e}")
+                    write_log(f"RAW RESPONSE = {response.text}")
+                    time.sleep(5)
+                    continue
+
                 write_log(
                     f"ENTRY PREMIUM = "
                     f"{entry_price}"
                 )
-
-        # =================================================
-        # TRADE MANAGEMENT
-        # =================================================
-
-        if trade_running:
-
-            current_option_price = (
-
-                atm_ce_ltp
-                if trade_side == "CE"
-                else atm_pe_ltp
-
-            )
-
-            move = (
-
-                current_option_price -
-                entry_price
-
-            )
+                write_log("STEP 6 PASSED")
 
             # =============================================
             # TRAIL SL
             # =============================================
+            move = current_option_price - entry_price
 
             if move >= TRAIL_START:
+
+                current_option_price = get_atm_options(entry_security_id)
+                    
 
                 new_trail = (
 
@@ -778,15 +818,26 @@ while True:
                 response = requests.post(
                     "https://api.dhan.co/orders",
                     headers=headers,
-                    json=order_payload
+                    json=order_payload,
+                    timeout=10
                 )
 
 
             write_log("SELL ORDER API CALLED")
+            write_log(f"STATUS CODE = {response.status_code}")
+            write_log(f"RESPONSE TEXT = {response.text}")
+
             try:
                     data = response.json()
                     write_log(f"SELL RESPONSE = {data}")
-                    write_log('SELL STEP PASSED')
+                    if response.status_code == 200:
+
+                        write_log('SELL STEP PASSED')
+                        trade_running = False
+                        trade_side = None
+                    else:
+                        write_log("SELL ORDER FAILED")
+                        
 
             except Exception as e:
                     write_log(f"SELL JSON ERROR = {e}")
