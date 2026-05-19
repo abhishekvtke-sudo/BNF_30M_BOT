@@ -281,10 +281,6 @@ write_log("====================================")
 write_log("REAL AUTO TRADING BOT STARTED")
 write_log("====================================")
 
-# =========================================================
-# MAIN LOOP
-# =========================================================
-
 while True:
 
     try:
@@ -293,71 +289,46 @@ while True:
 
         print(now, flush=True)
 
+        market_start = dt_time(9, 15)
+        market_end = dt_time(23, 30)
 
-        market_start = dt_time(
-            9,
-            15
-        )
-
-        market_end = dt_time(
-            15,
-            30
-        )
-
-        # =================================================
+        # ============================================
         # MARKET CLOSED
-        # =================================================
+        # ============================================
 
-        if (
-            now.time() < market_start or
-            now.time() > market_end
-        ):
+        if now.time() < market_start or now.time() > market_end:
 
             next_open = IST.localize(
-                datetime.combine(
-                    now.date(),
-                    market_start
-                )
+                datetime.combine(now.date(), market_start)
             )
 
             if now.time() > market_end:
-
-                next_open += timedelta(
-                    days=1
-                )
+                next_open += timedelta(days=1)
 
             remaining = next_open - now
 
-            hours = (
-                remaining.seconds // 3600
-            )
-
-            minutes = (
-                remaining.seconds % 3600
-            ) // 60
-
-            seconds = (
-                remaining.seconds % 60
-            )
+            hours = remaining.seconds // 3600
+            minutes = (remaining.seconds % 3600) // 60
+            seconds = remaining.seconds % 60
 
             write_log(
-
                 f"MARKET CLOSED | "
                 f"ATM CE = {atm_ce_ltp} | "
                 f"ATM PE = {atm_pe_ltp} | "
                 f"WAITING FOR OPEN = "
                 f"{hours}h {minutes}m {seconds}s"
-
             )
+
             current_second = datetime.now(IST).second
             sleep_time = 20 - (current_second % 20)
+
             time.sleep(sleep_time)
 
             continue
-        
-        # =================================================
+
+        # ============================================
         # LIVE BANKNIFTY
-        # =================================================
+        # ============================================
 
         live_price = get_banknifty_ltp()
 
@@ -368,24 +339,21 @@ while True:
             time.sleep(3)
             continue
 
-        # =================================================
-        # OPTION FETCH LIMITER
-        # =================================================
+        # ============================================
+        # OPTION DATA
+        # ============================================
 
-        rounded_price = round(
-            live_price
-        )
+        rounded_price = round(live_price)
 
         if (
             last_option_fetch_price is None or
-            abs(
-                rounded_price -
-                last_option_fetch_price
-            ) >= 100
+            abs(rounded_price - last_option_fetch_price) >= 100
         ):
+
             new_data = get_atm_options(live_price)
 
             if new_data is not None:
+
                 option_data = new_data
                 last_option_fetch_price = rounded_price
 
@@ -397,25 +365,19 @@ while True:
             atm_pe_ltp = option_data["pe_ltp"]
 
             write_log(
-
                 f"LIVE BNF = {live_price} | "
                 f"ATM = {atm_strike} | "
                 f"CE = {atm_ce_ltp} | "
                 f"PE = {atm_pe_ltp}"
-
             )
 
-            write_log("STEP 1 PASSED")
-
-        # =================================================
+        # ============================================
         # BUILD 5M CANDLE
-        # =================================================
+        # ============================================
 
         current_5m = (
-
             now.hour,
             now.minute // 5
-
         )
 
         if current_5m != last_5m_time:
@@ -423,26 +385,21 @@ while True:
             if candle_open is not None:
 
                 prices_5m.append({
-
                     "open": candle_open,
                     "high": candle_high,
                     "low": candle_low,
                     "close": candle_close
-
                 })
 
                 write_log(
-
                     f"5M CLOSED -> "
                     f"O={candle_open} "
                     f"H={candle_high} "
                     f"L={candle_low} "
                     f"C={candle_close}"
-
                 )
 
                 if len(prices_5m) > 6:
-
                     prices_5m.pop(0)
 
             candle_open = live_price
@@ -454,38 +411,22 @@ while True:
 
         else:
 
-            candle_high = max(
-                candle_high,
-                live_price
-            )
-
-            candle_low = min(
-                candle_low,
-                live_price
-            )
-
+            candle_high = max(candle_high, live_price)
+            candle_low = min(candle_low, live_price)
             candle_close = live_price
 
-            write_log("STEP 2 PASSED")
-
-
-
-        # =================================================
+        # ============================================
         # CREATE 30M LEVELS
-        # =================================================
+        # ============================================
 
         valid_30m = (
-
             now.minute == 15 or
             now.minute == 45
-
         )
 
         current_30m = (
-
             now.hour,
             now.minute
-
         )
 
         if valid_30m:
@@ -494,89 +435,39 @@ while True:
 
                 if len(prices_5m) == 6:
 
-                    highs = [
-
-                        x["high"]
-                        for x in prices_5m
-
-                    ]
-
-                    lows = [
-
-                        x["low"]
-                        for x in prices_5m
-
-                    ]
+                    highs = [x["high"] for x in prices_5m]
+                    lows = [x["low"] for x in prices_5m]
 
                     level_high = max(highs)
                     level_low = min(lows)
 
-                    write_log("")
-                    write_log(
-                        "30M LEVELS CREATED"
-                    )
-
-                    write_log(
-                        f"30M HIGH = {level_high}"
-                    )
-
-                    write_log(
-                        f"30M LOW = {level_low}"
-                    )
+                    write_log("30M LEVELS CREATED")
+                    write_log(f"30M HIGH = {level_high}")
+                    write_log(f"30M LOW = {level_low}")
 
                 last_30m_time = current_30m
 
-                write_log("STEP 3 PASSED")
-
-        # =================================================
+        # ============================================
         # ENTRY
-        # =================================================
+        # ============================================
 
         if (
-
             trade_running == False and
             level_high is not None and
             level_low is not None and
             option_data is not None
-
         ):
 
-            # =============================================
+            # =========================
             # BUY CE
-            # =============================================
+            # =========================
 
             if live_price > level_high:
 
-                trade_running = True
+                write_log("BUY CE SIGNAL")
 
-                trade_side = "CE"
-
-                entry_price = atm_ce_ltp
-
-                target_price = (
-                    entry_price +
-                    OPTION_TARGET
-                )
-
-                trail_sl = (
-                    entry_price -
-                    OPTION_SL
-                )
-
-                entry_security_id = option_data[
-                    "ce_security_id"
-                ]
-
-                write_log("STEP 4 PASSED")
-
-                write_log(f"ENTRY SECURITY ID = {entry_security_id}")
-
-
-                write_log("")
-                write_log("====================")
-                write_log("BUY CE")
-                write_log("====================")
                 order_payload = {
+
                     "transactionType": "BUY",
                     "exchangeSegment": "NSE_FNO",
                     "productType": "INTRADAY",
@@ -585,83 +476,58 @@ while True:
                     "securityId": option_data["ce_security_id"],
                     "quantity": REAL_QTY,
                     "price": 0
+
                 }
 
                 response = requests.post(
-                    "https://api.dhan.co/orders",
+                    "https://api.dhan.co/v2/orders",
                     headers=headers,
                     json=order_payload,
                     timeout=10
                 )
-                
 
-                write_log("ORDER API CALLED")
-
-                write_log(f"STATUS CODE = {response.status_code}")
-                write_log(f"RESPONSE TEXT = {response.text}")
-                
                 try:
                     data = response.json()
-                    write_log(f"BUY RESPONSE = {data}")
-                    if response.status_code == 200:
-                        trade_running = True
-                        trade_side = "CE"
-                        entry_price = atm_ce_ltp
-                        target_price = entry_price + OPTION_TARGET
-                        trail_sl = entry_price - OPTION_SL
-                        write_log("BUY STEP PASSED")
-                    else:
-                
-                        write_log("BUY ORDER FAILED")
-                        continue
+                    write_log(f"BUY DATA = {data}")
+                except:
+                    pass
 
-                except Exception as e:
-                    write_log(f"JSON ERROR = {e}")
-                    write_log(f"RAW RESPONSE = {response.text}")
-                    time.sleep(5)
-                    continue
+                write_log(f"BUY STATUS = {response.status_code}")
+                write_log(f"BUY RESPONSE = {response.text}")
 
-                write_log(
-                    f"ENTRY PREMIUM = "
-                    f"{entry_price}"
-                )
-                write_log("STEP 5 PASSED")
-            # =============================================
+                if response.status_code in [200, 201]:
+
+                    trade_running = True
+                    trade_side = "CE"
+
+                    entry_price = atm_ce_ltp
+
+                    target_price = (
+                        entry_price +
+                        OPTION_TARGET
+                    )
+
+                    trail_sl = (
+                        entry_price -
+                        OPTION_SL
+                    )
+
+                    write_log(f"ENTRY PRICE = {entry_price}")
+
+                else:
+
+                    write_log("BUY FAILED")
+
+            # =========================
             # BUY PE
-            # =============================================
+            # =========================
 
             elif live_price < level_low:
 
-                trade_running = True
+                write_log("BUY PE SIGNAL")
 
-                trade_side = "PE"
-
-                entry_price = atm_pe_ltp
-
-                target_price = (
-                    entry_price +
-                    OPTION_TARGET
-                )
-
-                trail_sl = (
-                    entry_price -
-                    OPTION_SL
-                )
-
-                entry_security_id = option_data[
-                    "pe_security_id"
-                ]
-
-                write_log("STEP 4 PASSED")
-
-                write_log(f"ENTRY SECURITY ID = {entry_security_id}")
-
-
-                write_log("")
-                write_log("====================")
-                write_log("BUY PE")
-                write_log("====================")
                 order_payload = {
+
                     "transactionType": "BUY",
                     "exchangeSegment": "NSE_FNO",
                     "productType": "INTRADAY",
@@ -670,63 +536,70 @@ while True:
                     "securityId": option_data["pe_security_id"],
                     "quantity": REAL_QTY,
                     "price": 0
+
                 }
 
                 response = requests.post(
-                    "https://api.dhan.co/orders",
+                    "https://api.dhan.co/v2/orders",
                     headers=headers,
                     json=order_payload,
                     timeout=10
                 )
-                
 
-                write_log("ORDER API CALLED")
-
-                write_log(f"STATUS CODE = {response.status_code}")
-                write_log(f"RESPONSE TEXT = {response.text}")
-                
                 try:
                     data = response.json()
-                    write_log(f"BUY RESPONSE = {data}")
-                    if response.status_code == 200:
-                        trade_running = True
-                        trade_side = "PE"
-                        entry_price = atm_pe_ltp
-                        target_price = entry_price + OPTION_TARGET
-                        trail_sl = entry_price - OPTION_SL
-                        write_log("BUY STEP PASSED")
-                    else:
-                
-                        write_log("BUY ORDER FAILED")
-                        continue
+                    write_log(f"BUY DATA = {data}")
+                except:
+                    pass
 
-                except Exception as e:
-                    write_log(f"JSON ERROR = {e}")
-                    write_log(f"RAW RESPONSE = {response.text}")
-                    time.sleep(5)
-                    continue
+                write_log(f"BUY STATUS = {response.status_code}")
+                write_log(f"BUY RESPONSE = {response.text}")
 
-                write_log(
-                    f"ENTRY PREMIUM = "
-                    f"{entry_price}"
-                )
-                write_log("STEP 6 PASSED")
+                if response.status_code in [200, 201]:
 
-            # =============================================
-            # TRAIL SL
-            # =============================================
+                    trade_running = True
+                    trade_side = "PE"
+
+                    entry_price = atm_pe_ltp
+
+                    target_price = (
+                        entry_price +
+                        OPTION_TARGET
+                    )
+
+                    trail_sl = (
+                        entry_price -
+                        OPTION_SL
+                    )
+
+                    write_log(f"ENTRY PRICE = {entry_price}")
+
+                else:
+
+                    write_log("BUY FAILED")
+
+        # ============================================
+        # ACTIVE TRADE
+        # ============================================
+
+        if trade_running:
+
+            if trade_side == "CE":
+                current_option_price = atm_ce_ltp
+            else:
+                current_option_price = atm_pe_ltp
+
             move = current_option_price - entry_price
+
+            # =========================
+            # TRAILING SL
+            # =========================
 
             if move >= TRAIL_START:
 
-                current_option_price = get_atm_options(entry_security_id)
-                    
-
                 new_trail = (
-
                     current_option_price -
                     TRAIL_GAP
-
                 )
 
                 if new_trail > trail_sl:
@@ -734,78 +607,37 @@ while True:
                     trail_sl = new_trail
 
                     write_log(
-
-                        f"TRAIL SL = "
-                        f"{trail_sl}"
-
+                        f"TRAIL SL UPDATED = {trail_sl}"
                     )
 
-            # =============================================
+            # =========================
             # FORCE EXIT
-            # =============================================
+            # =========================
 
             force_exit = (
-
                 now.hour == 15 and
                 now.minute >= 15
-
             )
 
-            # =============================================
+            # =========================
             # EXIT
-            # =============================================
+            # =========================
 
             if (
-
                 current_option_price <= trail_sl or
                 current_option_price >= target_price or
                 force_exit
-
             ):
 
-
-                exit_price = current_option_price
-
-                pnl = (
-
-                    exit_price -
-                    entry_price
-
-                ) * REAL_QTY
-
-                day_pnl += pnl
-
-                write_log("")
-                write_log("====================")
-                write_log("EXIT TRADE")
-                write_log("====================")
-
-                if force_exit:
-
-                    write_log(
-                        "EXIT REASON = FORCE EXIT"
-                    )
-
-                write_log(
-                    f"EXIT PREMIUM = "
-                    f"{exit_price}"
-                )
-
-                write_log(
-                    f"TRADE PNL = "
-                    f"{pnl}"
-                )
-
-                write_log(
-                    f"DAY PNL = "
-                    f"{day_pnl}"
-                )
+                write_log("EXIT TRIGGERED")
 
                 if trade_side == "CE":
                     exit_security_id = option_data["ce_security_id"]
                 else:
-                    exit_security_id = option_data["pe_security_id"]    
+                    exit_security_id = option_data["pe_security_id"]
+
                 order_payload = {
+
                     "transactionType": "SELL",
                     "exchangeSegment": "NSE_FNO",
                     "productType": "INTRADAY",
@@ -814,46 +646,37 @@ while True:
                     "securityId": exit_security_id,
                     "quantity": REAL_QTY,
                     "price": 0
+
                 }
+
                 response = requests.post(
-                    "https://api.dhan.co/orders",
+                    "https://api.dhan.co/v2/orders",
                     headers=headers,
                     json=order_payload,
                     timeout=10
                 )
 
-
-            write_log("SELL ORDER API CALLED")
-            write_log(f"STATUS CODE = {response.status_code}")
-            write_log(f"RESPONSE TEXT = {response.text}")
-
-            try:
+                try:
                     data = response.json()
-                    write_log(f"SELL RESPONSE = {data}")
-                    if response.status_code == 200:
+                    write_log(f"SELL DATA = {data}")
+                except:
+                    pass
 
-                        write_log('SELL STEP PASSED')
-                        trade_running = False
-                        trade_side = None
-                    else:
-                        write_log("SELL ORDER FAILED")
-                        
+                write_log(f"SELL STATUS = {response.status_code}")
+                write_log(f"SELL RESPONSE = {response.text}")
 
-            except Exception as e:
-                    write_log(f"SELL JSON ERROR = {e}")
-                    write_log(f"SELL RAW RESPONSE = {response.text}")
-                    time.sleep(5)
-                    continue
+                if response.status_code in [200, 201]:
 
-            trade_running = False
-            trade_side = None
+                    trade_running = False
+                    trade_side = None
+                    entry_price = None
+                    target_price = None
+                    trail_sl = None
 
         time.sleep(2)
 
     except Exception as e:
 
-        write_log(
-            f"MAIN LOOP ERROR = {e}"
-        )
+        write_log(f"MAIN LOOP ERROR = {e}")
 
         time.sleep(5)
