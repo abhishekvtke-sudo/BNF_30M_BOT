@@ -290,7 +290,7 @@ while True:
         print(now, flush=True)
 
         market_start = dt_time(9, 15)
-        market_end = dt_time(23, 30)
+        market_end = dt_time(15, 30)
 
         # ============================================
         # MARKET CLOSED
