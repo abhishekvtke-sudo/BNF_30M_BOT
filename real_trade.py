@@ -365,7 +365,7 @@ while True:
 
         if live_price is None:
 
-            time.sleep(2)
+            time.sleep(3)
             continue
 
         # =================================================
