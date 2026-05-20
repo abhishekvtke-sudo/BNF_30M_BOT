@@ -433,7 +433,7 @@ while True:
 
             if current_30m != last_30m_time:
 
-                if len(prices_5m) == 6:
+                if len(prices_5m) >= 6:
 
                     highs = [x["high"] for x in prices_5m]
                     lows = [x["low"] for x in prices_5m]
@@ -446,6 +446,7 @@ while True:
                     write_log(f"30M LOW = {level_low}")
 
                 last_30m_time = current_30m
+                prices_5m = []
 
         # ============================================
         # ENTRY
