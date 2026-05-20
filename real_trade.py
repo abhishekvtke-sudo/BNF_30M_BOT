@@ -292,7 +292,7 @@ while True:
         print(now, flush=True)
 
         market_start = dt_time(9, 15)
-        market_end = dt_time(15, 30)
+        market_end = dt_time(23, 30)
 
         # ============================================
         # MARKET CLOSED
@@ -424,8 +424,7 @@ while True:
         # ============================================
 
         valid_30m = (
-            now.minute == 15 or
-            now.minute == 45
+            now.minute % 10 == 0
         )
 
         current_30m = (
@@ -437,7 +436,7 @@ while True:
 
             if current_30m != last_30m_time:
 
-                if len(prices_5m) >= 6:
+                if len(prices_5m) >= 2:
 
                     highs = [x["high"] for x in prices_5m]
                     lows = [x["low"] for x in prices_5m]
