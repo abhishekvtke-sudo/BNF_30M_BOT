@@ -401,6 +401,8 @@ while True:
                     f"C={candle_close}"
                 )
 
+                last_5m_close = candle_close
+
                 if len(prices_5m) > 6:
                     prices_5m.pop(0)
 
