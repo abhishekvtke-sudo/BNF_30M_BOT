@@ -466,7 +466,7 @@ while True:
             # =========================
 
             if (
-                last_5m_close> level_high and
+                last_5m_close is not None and
                 level_high is not None and
                 last_5m_close > level_high
             ):
@@ -531,7 +531,7 @@ while True:
             # BUY PE
             # =========================
 
-            elif (last_5m_close < level_low and
+            elif (last_5m_close is not None and
                 level_low is not None and
                 last_5m_close < level_low):
 
