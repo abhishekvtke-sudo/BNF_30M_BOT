@@ -465,7 +465,11 @@ while True:
             # BUY CE
             # =========================
 
-            if last_5m_close> level_high:
+            if (
+                last_5m_close> level_high and
+                level_high is not None and
+                last_5m_close > level_high
+            ):
 
                 write_log("BUY CE SIGNAL")
 
@@ -527,7 +531,9 @@ while True:
             # BUY PE
             # =========================
 
-            elif last_5m_close < level_low:
+            elif (last_5m_close < level_low and
+                level_low is not None and
+                last_5m_close < level_low):
 
                 write_log("BUY PE SIGNAL")
 
