@@ -270,6 +270,8 @@ option_data = None
 atm_ce_ltp = 0
 atm_pe_ltp = 0
 
+last_5m_close = None
+
 
 
 # =========================================================
@@ -463,12 +465,14 @@ while True:
             # BUY CE
             # =========================
 
-            if live_price > level_high:
+            if last_5m_close> level_high:
 
                 write_log("BUY CE SIGNAL")
 
                 order_payload = {
 
+
+                    "dhanClientId": CLIENT_ID,
                     "transactionType": "BUY",
                     "exchangeSegment": "NSE_FNO",
                     "productType": "INTRADAY",
@@ -523,12 +527,13 @@ while True:
             # BUY PE
             # =========================
 
-            elif live_price < level_low:
+            elif last_5m_close < level_low:
 
                 write_log("BUY PE SIGNAL")
 
                 order_payload = {
 
+                    "dhanClientId": CLIENT_ID,
                     "transactionType": "BUY",
                     "exchangeSegment": "NSE_FNO",
                     "productType": "INTRADAY",
@@ -639,6 +644,7 @@ while True:
 
                 order_payload = {
 
+                    "dhanClientId": CLIENT_ID,
                     "transactionType": "SELL",
                     "exchangeSegment": "NSE_FNO",
                     "productType": "INTRADAY",
