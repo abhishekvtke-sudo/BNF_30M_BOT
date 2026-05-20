@@ -450,11 +450,17 @@ while True:
                     write_log(f"30M LOW = {level_low}")
 
                 last_30m_time = current_30m
-                prices_5m = []
-
+                prices_5m = [] 
+            
         # ============================================
         # ENTRY
         # ============================================
+        write_log(
+            f"CHECK -> "
+            f"close={last_5m_close} | "
+            f"level_high={level_high} | "
+            f"level_low={level_low}"
+        )
 
         if (
             trade_running == False and
